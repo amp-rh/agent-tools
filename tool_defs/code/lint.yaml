@@ -1,0 +1,26 @@
+name: code.lint
+description: 'Lint and auto-fix code issues in Python files.
+
+
+  Use this when code has linting errors or needs formatting. Runs ruff with auto-fix
+  enabled by default.
+
+
+  Returns:
+
+  - Summary of issues found and fixed
+
+  - Any remaining issues that need manual attention
+
+  - Exit status (clean, fixed, or has errors)'
+module: agent_tools.code.lint
+function: lint
+parameters:
+- name: path
+  type: string
+  description: File or directory to lint (defaults to current directory)
+  required: false
+- name: fix
+  type: boolean
+  description: 'Auto-fix issues (default: true)'
+  required: false

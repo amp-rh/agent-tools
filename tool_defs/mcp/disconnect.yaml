@@ -1,0 +1,15 @@
+name: mcp.disconnect
+description: 'Disconnect from an external MCP server and stop it.
+
+
+  Use this to gracefully shut down an external server when no longer needed.
+
+  If no name is provided, disconnects from all external servers.'
+module: agent_tools.mcp.disconnect
+function: disconnect
+parameters:
+- name: name
+  type: string
+  description: Name of the server to disconnect (optional, disconnects all if not
+    provided)
+  required: false

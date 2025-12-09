@@ -1,0 +1,3 @@
+# agent-tools configuration
+# Tool definitions are loaded from tool_defs/
+tool_defs_dir: ./tool_defs

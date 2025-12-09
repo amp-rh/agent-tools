@@ -1,0 +1,28 @@
+name: mcp.add
+description: "Add an external MCP server reference to agent-tools.yaml.\n\nThis allows\
+  \ you to use tools from other MCP servers (like GitHub, filesystem, etc.) through\
+  \ agent-tools without installing them in Cursor.\n\nThe server will be spawned when\
+  \ agent-tools starts and its tools will be available via registry-execute.\n\nExample:\
+  \ Add GitHub MCP server:\n  mcp.add(name=\"github\", command=\"npx\", args='[\"\
+  -y\", \"@modelcontextprotocol/server-github\"]', env='{\"GITHUB_PERSONAL_ACCESS_TOKEN\"\
+  : \"${GITHUB_TOKEN}\"}')"
+module: agent_tools.mcp.add
+function: add
+parameters:
+- name: name
+  type: string
+  description: Unique name for this server (e.g., 'github', 'filesystem')
+  required: true
+- name: command
+  type: string
+  description: Command to run the server (e.g., 'npx', 'uvx', 'node')
+  required: true
+- name: args
+  type: string
+  description: JSON array of command arguments (e.g., '["-y", "@modelcontextprotocol/server-github"]')
+  required: true
+- name: env
+  type: string
+  description: 'JSON object of environment variables (e.g., ''{"GITHUB_TOKEN": "xxx"}''),
+    supports ${VAR} syntax'
+  required: false

@@ -1,0 +1,12 @@
+name: mcp.remove
+description: 'Remove an external MCP server reference from agent-tools.yaml.
+
+
+  The server will no longer be spawned and its tools will not be available.'
+module: agent_tools.mcp.remove
+function: remove
+parameters:
+- name: name
+  type: string
+  description: Name of the server to remove
+  required: true

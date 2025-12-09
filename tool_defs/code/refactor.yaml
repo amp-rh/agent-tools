@@ -1,0 +1,32 @@
+name: code.refactor
+description: 'Analyze code for refactoring opportunities and generate a refactoring
+  plan.
+
+
+  Use this when asked to refactor, clean up, or reduce duplication in code.
+
+
+  Analyzes the target path for:
+
+  - Duplicate functions/logic across files
+
+  - Code that should be extracted into shared utilities
+
+  - Overly complex functions that should be split
+
+  - Dead code that can be removed
+
+
+  Returns a structured refactoring plan with specific file changes.'
+module: agent_tools.code.refactor
+function: refactor
+parameters:
+- name: path
+  type: string
+  description: Directory or file to analyze for refactoring
+  required: true
+- name: focus
+  type: string
+  description: 'Specific focus area: ''duplication'', ''complexity'', ''dead-code'',
+    or ''all'''
+  required: false
