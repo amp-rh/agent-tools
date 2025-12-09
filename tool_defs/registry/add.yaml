@@ -1,0 +1,36 @@
+name: registry.add
+description: 'Add a new tool to the registry. Creates YAML entry, module stub, and
+  test stub.
+
+
+  IMPORTANT: Tool descriptions shape how agents understand and use tools.
+
+  Write descriptions as if they''re the only documentation an agent will read.
+
+
+  After calling this:
+
+  1. Implement the function in the created stub
+
+  2. Run tests: uv run pytest tests/test_<namespace>/test_<tool>.py
+
+  3. Restart MCP server to use the new tool
+
+  '
+module: agent_tools.registry
+function: add_tool
+parameters:
+- name: name
+  type: string
+  description: Tool name with namespace (e.g., 'jira.create-issue', 'git.commit')
+  required: true
+- name: description
+  type: string
+  description: 'Detailed description - this IS the interface. Include: what it does,
+    when to use it, what it returns.'
+  required: true
+- name: parameters
+  type: string
+  description: 'JSON array: [{"name": "x", "type": "string", "description": "...",
+    "required": true}]. Use [] for no params.'
+  required: true

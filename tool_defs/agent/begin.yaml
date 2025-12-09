@@ -1,0 +1,23 @@
+name: agent.begin
+description: 'ALWAYS call this first with the task you''re about to do.
+
+
+  Analyzes your task, checks for existing tools, and recommends whether to:
+
+  1. Use an existing tool
+
+  2. Create a new tool first (if repeatable)
+
+  3. Do it manually (rare, one-off tasks)
+
+
+  This replaces jumping straight to execution. Describe what you''re about to do,
+  and this tool will help you approach it correctly.'
+module: agent_tools.agent.begin
+function: begin
+parameters:
+- name: task
+  type: string
+  description: What you're about to do (e.g., 'write documentation for the API', 'fix
+    the login bug', 'create a test file')
+  required: true

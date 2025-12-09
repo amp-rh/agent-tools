@@ -1,0 +1,21 @@
+name: registry.execute
+description: 'Execute a tool by name. Use this to call tools not directly exposed
+  in the MCP interface.
+
+
+  Call registry-list to see all available tools, then execute by name.
+
+
+  Example: registry.execute(name="docs.write-findings", params=''{"path": "out.md",
+  ...}'')'
+module: agent_tools.registry
+function: execute_tool
+parameters:
+- name: name
+  type: string
+  description: Tool name to execute (e.g., 'docs.write-findings')
+  required: true
+- name: params
+  type: string
+  description: JSON object of parameters to pass to the tool
+  required: true

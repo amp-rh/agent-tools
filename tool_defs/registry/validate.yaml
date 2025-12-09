@@ -1,0 +1,21 @@
+name: registry.validate
+description: 'Validate the registry for common errors.
+
+
+  Checks:
+
+  - Tools pointing to non-existent modules
+
+  - Duplicate tool names
+
+  - Invalid parameter definitions
+
+  - Missing required fields
+
+
+  Run this after making changes to catch errors before MCP restart.
+
+  '
+module: agent_tools.registry
+function: validate_registry
+parameters: []

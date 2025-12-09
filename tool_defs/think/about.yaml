@@ -1,0 +1,25 @@
+name: think.about
+description: 'Pause and think deeply about a problem before acting.
+
+
+  Use this when facing a complex or unclear situation. Returns structured thinking
+  prompts to help analyze:
+
+  - What is the actual problem?
+
+  - What do I know vs assume?
+
+  - What are the options?
+
+  - What could go wrong?
+
+
+  This is the foundation for deliberate problem-solving. More specialized thinking
+  tools branch from here.'
+module: agent_tools.think.about
+function: about
+parameters:
+- name: problem
+  type: string
+  description: The problem or situation to think through
+  required: true

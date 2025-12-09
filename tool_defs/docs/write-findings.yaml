@@ -1,0 +1,39 @@
+name: docs.write-findings
+description: 'Create a structured findings document from an experiment or investigation.
+
+
+  Use this whenever documenting learnings, experiment results, or investigation outcomes.
+
+
+  Creates a markdown file with standardized sections: Problem, Attempts, Insights,
+  Recommendations.
+
+
+  Returns the path to the created file.'
+module: agent_tools.docs.write_findings
+function: write_findings
+parameters:
+- name: path
+  type: string
+  description: Output file path (e.g., 'docs/my-findings.md')
+  required: true
+- name: topic
+  type: string
+  description: Title/topic of the findings
+  required: true
+- name: problem
+  type: string
+  description: Problem statement - what were you trying to solve?
+  required: true
+- name: attempts
+  type: string
+  description: 'JSON array of attempts: [{"name": "...", "result": "..."}]'
+  required: true
+- name: insights
+  type: string
+  description: JSON array of insight strings
+  required: true
+- name: recommendations
+  type: string
+  description: JSON array of recommendation strings
+  required: true

@@ -1,0 +1,17 @@
+name: mcp.connect
+description: 'Connect to an external MCP server and discover its tools.
+
+
+  Use this after mcp.add to immediately connect without restarting agent-tools.
+
+  Returns the list of tools available from the server.
+
+
+  The server will be started if not already running.'
+module: agent_tools.mcp.connect
+function: connect
+parameters:
+- name: name
+  type: string
+  description: Name of the server to connect to (must be configured via mcp.add first)
+  required: true
