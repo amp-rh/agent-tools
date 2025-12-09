@@ -1,0 +1,12 @@
+name: registry.list
+description: 'List all tools in the registry, organized by namespace.
+
+
+  Output is hierarchical YAML showing tool names and short descriptions.
+
+  Use this to see what capabilities are available.
+
+  '
+module: agent_tools.registry
+function: list_tools
+parameters: []

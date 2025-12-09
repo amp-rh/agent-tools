@@ -1,0 +1,20 @@
+name: github.my-prs
+description: 'List your open pull requests across all repositories.
+
+
+  This is a wrapper around github.search_issues that provides a simpler interface
+  for a common task.
+
+
+  Returns a formatted list of your open PRs with title, repo, and URL.'
+module: agent_tools.github.my_prs
+function: my_prs
+parameters:
+- name: state
+  type: string
+  description: 'PR state: ''open'' (default), ''closed'', or ''all'''
+  required: false
+- name: limit
+  type: integer
+  description: 'Maximum number of PRs to return (default: 20)'
+  required: false
