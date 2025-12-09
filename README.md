@@ -2,6 +2,28 @@
 
 A self-modifying tool registry that lets AI agents create and manage their own tools via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/).
 
+[![Add to Cursor](https://img.shields.io/badge/Add%20to-Cursor-blue?style=for-the-badge&logo=cursor)](https://cursor.com) 
+
+<details>
+<summary><strong>Quick Add to Cursor</strong></summary>
+
+Add this to your `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "agent-tools": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/amp-rh/agent-tools.git", "agent-tools-server"]
+    }
+  }
+}
+```
+
+Then restart Cursor.
+
+</details>
+
 ## What It Does
 
 agent-tools exposes a set of tools to AI assistants (like Claude in Cursor) that let them:
