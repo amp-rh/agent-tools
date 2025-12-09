@@ -8,13 +8,12 @@ from agent_tools.mcp.call import call_external_sync
 
 __all__ = ["my_prs"]
 
-# GitHub username - can be overridden via env var
-GITHUB_USERNAME = os.environ.get("GITHUB_USERNAME", "amp-rh")
-
 
 def my_prs(state: str = None, limit: int = None) -> str:
     """
     List your open pull requests across all repositories.
+
+    Requires GITHUB_USERNAME environment variable to be set.
 
     Args:
         state: PR state: 'open' (default), 'closed', or 'all'
@@ -23,11 +22,14 @@ def my_prs(state: str = None, limit: int = None) -> str:
     Returns:
         Formatted list of PRs.
     """
+    username = os.environ.get("GITHUB_USERNAME")
+    if not username:
+        return "Error: GITHUB_USERNAME environment variable is not set."
+
     state = state or "open"
     limit = limit or 20
 
-    # Build search query
-    query = f"is:pr is:{state} author:{GITHUB_USERNAME}"
+    query = f"is:pr is:{state} author:{username}"
 
     # Call the external github server
     result = call_external_sync("github", "search_issues", q=query)
@@ -44,7 +46,7 @@ def my_prs(state: str = None, limit: int = None) -> str:
     items = data.get("items", [])[:limit]
 
     if not items:
-        return f"No {state} PRs found for {GITHUB_USERNAME}."
+        return f"No {state} PRs found for {username}."
 
     lines = [
         f"## Your {state.title()} PRs ({total} total)",
