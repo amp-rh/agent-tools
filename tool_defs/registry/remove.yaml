@@ -1,0 +1,16 @@
+name: registry.remove
+description: 'Remove a tool from the registry by name.
+
+
+  Only removes the YAML entry - does NOT delete the Python module or tests.
+
+  This allows recovery if removed by mistake.
+
+  '
+module: agent_tools.registry
+function: remove_tool
+parameters:
+- name: name
+  type: string
+  description: Exact tool name to remove (e.g., 'jira.create-issue')
+  required: true

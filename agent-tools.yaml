@@ -1,0 +1,237 @@
+tools_dir: .
+tools:
+- name: registry.add
+  description: 'Add a new tool to the registry. Creates YAML entry, module stub, and
+    test stub.
+
+
+    IMPORTANT: Tool descriptions shape how agents understand and use tools.
+
+    Write descriptions as if they''re the only documentation an agent will read.
+
+
+    After calling this:
+
+    1. Implement the function in the created stub
+
+    2. Run tests: uv run pytest tests/test_<namespace>/test_<tool>.py
+
+    3. Restart MCP server to use the new tool
+
+    '
+  module: agent_tools.registry
+  function: add_tool
+  parameters:
+  - name: name
+    type: string
+    description: Tool name with namespace (e.g., 'jira.create-issue', 'git.commit')
+    required: true
+  - name: description
+    type: string
+    description: 'Detailed description - this IS the interface. Include: what it does,
+      when to use it, what it returns.'
+    required: true
+  - name: parameters
+    type: string
+    description: 'JSON array: [{"name": "x", "type": "string", "description": "...",
+      "required": true}]. Use [] for no params.'
+    required: true
+- name: registry.remove
+  description: 'Remove a tool from the registry by name.
+
+
+    Only removes the YAML entry - does NOT delete the Python module or tests.
+
+    This allows recovery if removed by mistake.
+
+    '
+  module: agent_tools.registry
+  function: remove_tool
+  parameters:
+  - name: name
+    type: string
+    description: Exact tool name to remove (e.g., 'jira.create-issue')
+    required: true
+- name: registry.update
+  description: 'Update an existing tool''s definition in the registry.
+
+
+    Only updates fields you provide - others remain unchanged.
+
+    Does NOT modify the Python module - update that separately if needed.
+
+    '
+  module: agent_tools.registry
+  function: update_tool
+  parameters:
+  - name: name
+    type: string
+    description: Tool name to update (must exist)
+    required: true
+  - name: description
+    type: string
+    description: New description (leave empty to keep existing)
+    required: false
+  - name: parameters
+    type: string
+    description: New parameters JSON (leave empty to keep existing)
+    required: false
+- name: registry.list
+  description: 'List all tools in the registry, organized by namespace.
+
+
+    Output is hierarchical YAML showing tool names and short descriptions.
+
+    Use this to see what capabilities are available.
+
+    '
+  module: agent_tools.registry
+  function: list_tools
+  parameters: []
+- name: registry.validate
+  description: 'Validate the registry for common errors.
+
+
+    Checks:
+
+    - Tools pointing to non-existent modules
+
+    - Duplicate tool names
+
+    - Invalid parameter definitions
+
+    - Missing required fields
+
+
+    Run this after making changes to catch errors before MCP restart.
+
+    '
+  module: agent_tools.registry
+  function: validate_registry
+  parameters: []
+- name: agent.start-here
+  description: 'ALWAYS call this first before attempting any task.
+
+
+    Returns available tools and the workflow for using agent-tools.
+
+
+    If a tool exists for your task, use it.
+
+    If no tool exists and the task is repeatable, create one with registry-add first,
+    then use it.
+
+
+    Every repeatable process becomes a tool. Your job is to think. Tools do the work.'
+  module: agent_tools.agent.start_here
+  function: start_here
+  parameters: []
+- name: docs.write-findings
+  description: 'Create a structured findings document from an experiment or investigation.
+
+
+    Use this whenever documenting learnings, experiment results, or investigation
+    outcomes.
+
+
+    Creates a markdown file with standardized sections: Problem, Attempts, Insights,
+    Recommendations.
+
+
+    Returns the path to the created file.'
+  module: agent_tools.docs.write_findings
+  function: write_findings
+  parameters:
+  - name: path
+    type: string
+    description: Output file path (e.g., 'docs/my-findings.md')
+    required: true
+  - name: topic
+    type: string
+    description: Title/topic of the findings
+    required: true
+  - name: problem
+    type: string
+    description: Problem statement - what were you trying to solve?
+    required: true
+  - name: attempts
+    type: string
+    description: 'JSON array of attempts: [{"name": "...", "result": "..."}]'
+    required: true
+  - name: insights
+    type: string
+    description: JSON array of insight strings
+    required: true
+  - name: recommendations
+    type: string
+    description: JSON array of recommendation strings
+    required: true
+- name: agent.begin
+  description: 'ALWAYS call this first with the task you''re about to do.
+
+
+    Analyzes your task, checks for existing tools, and recommends whether to:
+
+    1. Use an existing tool
+
+    2. Create a new tool first (if repeatable)
+
+    3. Do it manually (rare, one-off tasks)
+
+
+    This replaces jumping straight to execution. Describe what you''re about to do,
+    and this tool will help you approach it correctly.'
+  module: agent_tools.agent.begin
+  function: begin
+  parameters:
+  - name: task
+    type: string
+    description: What you're about to do (e.g., 'write documentation for the API',
+      'fix the login bug', 'create a test file')
+    required: true
+- name: registry.execute
+  description: 'Execute a tool by name. Use this to call tools not directly exposed
+    in the MCP interface.
+
+
+    Call registry-list to see all available tools, then execute by name.
+
+
+    Example: registry.execute(name="docs.write-findings", params=''{"path": "out.md",
+    ...}'')'
+  module: agent_tools.registry
+  function: execute_tool
+  parameters:
+  - name: name
+    type: string
+    description: Tool name to execute (e.g., 'docs.write-findings')
+    required: true
+  - name: params
+    type: string
+    description: JSON object of parameters to pass to the tool
+    required: true
+- name: think.about
+  description: 'Pause and think deeply about a problem before acting.
+
+
+    Use this when facing a complex or unclear situation. Returns structured thinking
+    prompts to help analyze:
+
+    - What is the actual problem?
+
+    - What do I know vs assume?
+
+    - What are the options?
+
+    - What could go wrong?
+
+
+    This is the foundation for deliberate problem-solving. More specialized thinking
+    tools branch from here.'
+  module: agent_tools.think.about
+  function: about
+  parameters:
+  - name: problem
+    type: string
+    description: The problem or situation to think through
+    required: true

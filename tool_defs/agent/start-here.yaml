@@ -1,0 +1,17 @@
+name: agent.start-here
+description: 'ALWAYS call this first before attempting any task.
+
+
+  Returns available tools and the workflow for using agent-tools.
+
+
+  If a tool exists for your task, use it.
+
+  If no tool exists and the task is repeatable, create one with registry-add first,
+  then use it.
+
+
+  Every repeatable process becomes a tool. Your job is to think. Tools do the work.'
+module: agent_tools.agent.start_here
+function: start_here
+parameters: []

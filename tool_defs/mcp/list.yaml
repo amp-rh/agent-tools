@@ -1,0 +1,8 @@
+name: mcp.list
+description: 'List all configured external MCP servers.
+
+
+  Shows server name, command, and status for each configured external MCP server.'
+module: agent_tools.mcp.list
+function: list_servers
+parameters: []

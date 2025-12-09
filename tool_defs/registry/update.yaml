@@ -1,0 +1,24 @@
+name: registry.update
+description: 'Update an existing tool''s definition in the registry.
+
+
+  Only updates fields you provide - others remain unchanged.
+
+  Does NOT modify the Python module - update that separately if needed.
+
+  '
+module: agent_tools.registry
+function: update_tool
+parameters:
+- name: name
+  type: string
+  description: Tool name to update (must exist)
+  required: true
+- name: description
+  type: string
+  description: New description (leave empty to keep existing)
+  required: false
+- name: parameters
+  type: string
+  description: New parameters JSON (leave empty to keep existing)
+  required: false
