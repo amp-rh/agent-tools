@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -34,7 +33,9 @@ class TestCmdInit:
         assert result == 0
         assert (tmp_cwd / "agent-tools.yaml").exists()
 
-    def test_init_refuses_overwrite_without_force(self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch):
+    def test_init_refuses_overwrite_without_force(
+        self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch
+    ):
         """Verify init refuses to overwrite existing file without --force."""
         (tmp_cwd / "agent-tools.yaml").write_text("existing: true\n")
 
@@ -69,7 +70,10 @@ class TestCmdList:
     """Tests for the list command."""
 
     def test_list_succeeds_with_registry(
-        self, tmp_registry: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+        self,
+        tmp_registry: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
     ):
         """Verify list succeeds when registry is found and displays tools."""
         from agent_tools.registry import add_tool
@@ -86,7 +90,9 @@ class TestCmdList:
         assert "test:" in captured.out
         assert "tool:" in captured.out
 
-    def test_list_fails_without_registry(self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch):
+    def test_list_fails_without_registry(
+        self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch
+    ):
         """Verify list fails when no registry found."""
         monkeypatch.setattr(cli, "find_registry", lambda: None)
 
@@ -99,7 +105,10 @@ class TestCmdValidate:
     """Tests for the validate command."""
 
     def test_validate_succeeds_with_registry(
-        self, tmp_registry: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+        self,
+        tmp_registry: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
     ):
         """Verify validate succeeds with a valid registry."""
         from agent_tools.registry import add_tool
@@ -115,7 +124,9 @@ class TestCmdValidate:
         captured = capsys.readouterr()
         assert "Validated" in captured.out
 
-    def test_validate_fails_without_registry(self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch):
+    def test_validate_fails_without_registry(
+        self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch
+    ):
         """Verify validate fails when no registry found."""
         monkeypatch.setattr(cli, "find_registry", lambda: None)
 
@@ -158,7 +169,9 @@ class TestCmdServer:
 class TestFindRegistry:
     """Tests for registry discovery."""
 
-    def test_find_registry_returns_local_first(self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch):
+    def test_find_registry_returns_local_first(
+        self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch
+    ):
         """Verify find_registry prefers local config."""
         local = tmp_cwd / "agent-tools.yaml"
         local.write_text("local: true\n")
@@ -168,7 +181,9 @@ class TestFindRegistry:
 
         assert result == local
 
-    def test_find_registry_returns_none_when_missing(self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch):
+    def test_find_registry_returns_none_when_missing(
+        self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch
+    ):
         """Verify find_registry returns None when no config found."""
         monkeypatch.setattr(cli, "LOCAL_CONFIG", tmp_cwd / "nonexistent.yaml")
         monkeypatch.setattr(cli, "USER_CONFIG_DIR", tmp_cwd / "user_config")
@@ -177,7 +192,9 @@ class TestFindRegistry:
 
         assert result is None
 
-    def test_find_registry_falls_back_to_user_config(self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch):
+    def test_find_registry_falls_back_to_user_config(
+        self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch
+    ):
         """Verify find_registry checks user config directory."""
         user_config_dir = tmp_cwd / "user_config"
         user_config_dir.mkdir()
@@ -244,7 +261,9 @@ class TestMain:
 class TestGetDefaultRegistryPath:
     """Tests for default registry path resolution."""
 
-    def test_returns_package_default_if_exists(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    def test_returns_package_default_if_exists(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ):
         """Verify returns package default when it exists."""
         default_reg = tmp_path / "agent-tools.yaml"
         default_reg.write_text("tools: {}\n")
