@@ -72,15 +72,17 @@ class TestCursorInstallButton:
         config = json.loads(decoded)
         assert isinstance(config, dict)
 
-    def test_cursor_url_config_has_command(self, cursor_install_url: str):
-        """Verify the config specifies a command."""
+    def test_cursor_url_config_has_server_entry(self, cursor_install_url: str):
+        """Verify the config has agent-tools server entry."""
         parsed = urlparse(cursor_install_url)
         params = parse_qs(parsed.query)
         config_b64 = params["config"][0]
 
         config = json.loads(base64.b64decode(config_b64))
-        assert "command" in config
-        assert config["command"] == "uvx"
+        assert "agent-tools" in config
+        server_config = config["agent-tools"]
+        assert "command" in server_config
+        assert server_config["command"] == "uvx"
 
     def test_cursor_url_config_has_args(self, cursor_install_url: str):
         """Verify the config includes args with proper structure."""
@@ -89,10 +91,11 @@ class TestCursorInstallButton:
         config_b64 = params["config"][0]
 
         config = json.loads(base64.b64decode(config_b64))
-        assert "args" in config
-        assert isinstance(config["args"], list)
+        server_config = config["agent-tools"]
+        assert "args" in server_config
+        assert isinstance(server_config["args"], list)
 
         # Should include git URL and server subcommand
-        args = config["args"]
+        args = server_config["args"]
         assert any("github.com/amp-rh/agent-tools" in arg for arg in args)
         assert "server" in args
