@@ -5,7 +5,7 @@ import base64
 import json
 import re
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 import pytest
 
@@ -24,8 +24,8 @@ class TestCursorInstallButton:
     @pytest.fixture
     def cursor_install_url(self, readme_content: str) -> str:
         """Extract the Cursor install URL from README."""
-        # Match the cursor.com/install-mcp URL in markdown link format
-        match = re.search(r'\]\((https://cursor\.com/install-mcp\?[^)]+)\)', readme_content)
+        # Match the cursor.com install-mcp URL in markdown link format
+        match = re.search(r'\]\((https://cursor\.com/[^)]+install-mcp\?[^)]+)\)', readme_content)
         assert match, "No Cursor install URL found in README"
         return match.group(1)
 
@@ -39,10 +39,10 @@ class TestCursorInstallButton:
         parsed = urlparse(cursor_install_url)
         assert parsed.netloc == "cursor.com"
 
-    def test_cursor_url_has_correct_path(self, cursor_install_url: str):
+    def test_cursor_url_has_install_mcp_path(self, cursor_install_url: str):
         """Verify the URL uses the install-mcp endpoint."""
         parsed = urlparse(cursor_install_url)
-        assert parsed.path == "/install-mcp"
+        assert "install-mcp" in parsed.path
 
     def test_cursor_url_has_name_param(self, cursor_install_url: str):
         """Verify the URL includes the name parameter."""
@@ -57,7 +57,8 @@ class TestCursorInstallButton:
         params = parse_qs(parsed.query)
         assert "config" in params
 
-        config_b64 = params["config"][0]
+        # URL decode the config (handles %3D -> =)
+        config_b64 = unquote(params["config"][0])
         # Should not raise on valid base64
         decoded = base64.b64decode(config_b64)
         assert decoded  # Non-empty
@@ -66,36 +67,21 @@ class TestCursorInstallButton:
         """Verify the decoded config is valid JSON."""
         parsed = urlparse(cursor_install_url)
         params = parse_qs(parsed.query)
-        config_b64 = params["config"][0]
+        config_b64 = unquote(params["config"][0])
 
         decoded = base64.b64decode(config_b64)
         config = json.loads(decoded)
         assert isinstance(config, dict)
 
-    def test_cursor_url_config_has_server_entry(self, cursor_install_url: str):
-        """Verify the config has agent-tools server entry."""
+    def test_cursor_url_config_has_command(self, cursor_install_url: str):
+        """Verify the config specifies the uvx command."""
         parsed = urlparse(cursor_install_url)
         params = parse_qs(parsed.query)
-        config_b64 = params["config"][0]
+        config_b64 = unquote(params["config"][0])
 
         config = json.loads(base64.b64decode(config_b64))
-        assert "agent-tools" in config
-        server_config = config["agent-tools"]
-        assert "command" in server_config
-        assert server_config["command"] == "uvx"
-
-    def test_cursor_url_config_has_args(self, cursor_install_url: str):
-        """Verify the config includes args with proper structure."""
-        parsed = urlparse(cursor_install_url)
-        params = parse_qs(parsed.query)
-        config_b64 = params["config"][0]
-
-        config = json.loads(base64.b64decode(config_b64))
-        server_config = config["agent-tools"]
-        assert "args" in server_config
-        assert isinstance(server_config["args"], list)
-
-        # Should include git URL and server subcommand
-        args = server_config["args"]
-        assert any("github.com/amp-rh/agent-tools" in arg for arg in args)
-        assert "server" in args
+        assert "command" in config
+        command = config["command"]
+        assert "uvx" in command
+        assert "github.com/amp-rh/agent-tools" in command
+        assert "server" in command
