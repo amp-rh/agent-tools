@@ -272,4 +272,3 @@ class TestGetDefaultRegistryPath:
         result = cli.get_default_registry_path()
 
         assert result == default_reg
-
