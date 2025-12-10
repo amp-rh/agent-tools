@@ -47,3 +47,23 @@ class TestUvxFunctional:
 
         assert result.returncode == 0, f"Command failed: {result.stderr}"
         assert "Validated" in result.stdout
+
+    def test_uvx_local_server_command(self):
+        """Verify 'uvx <local-path> server' works like the README's remote command.
+
+        The README uses: uvx git+https://github.com/amp-rh/agent-tools.git server
+        This tests the equivalent local command: uvx <project-path> server
+        """
+        # Server starts and waits for MCP input - we send EOF to make it exit
+        result = subprocess.run(
+            ["uvx", str(PROJECT_ROOT), "server"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            input="",  # Send EOF immediately
+        )
+
+        # Server should start successfully and show it loaded tool_defs
+        assert "Using tool_defs:" in result.stderr or result.returncode == 0, (
+            f"Command failed: {result.stderr}"
+        )
