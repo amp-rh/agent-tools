@@ -117,45 +117,50 @@ def cmd_server(args: list[str]) -> int:
 
 def cmd_list(args: list[str]) -> int:
     """List all registered tools."""
+    from agent_tools import _core, registry
     from agent_tools.registry import list_tools
 
     # Find and use registry
-    registry = find_registry()
-    if not registry:
+    registry_path = find_registry()
+    if not registry_path:
         print("Error: No agent-tools.yaml found.")
         print("Run 'agent-tools init' to create one.")
         return 1
 
-    # Temporarily point registry module to found file
-    import agent_tools.registry as reg
-    original = reg.REGISTRY_FILE
-    reg.REGISTRY_FILE = registry
+    # Temporarily point to found registry's tool_defs
+    original = _core.TOOL_DEFS_DIR
+    _core.TOOL_DEFS_DIR = registry_path.parent / "tool_defs" if registry_path.name == "agent-tools.yaml" else registry_path
+    registry._reset_manager()
 
     try:
         print(list_tools())
     finally:
-        reg.REGISTRY_FILE = original
+        _core.TOOL_DEFS_DIR = original
+        registry._reset_manager()
 
     return 0
 
 
 def cmd_validate(args: list[str]) -> int:
     """Validate the registry."""
+    from agent_tools import _core, registry
     from agent_tools.registry import validate_registry
 
-    registry = find_registry()
-    if not registry:
+    registry_path = find_registry()
+    if not registry_path:
         print("Error: No agent-tools.yaml found.")
         return 1
 
-    import agent_tools.registry as reg
-    original = reg.REGISTRY_FILE
-    reg.REGISTRY_FILE = registry
+    # Temporarily point to found registry's tool_defs
+    original = _core.TOOL_DEFS_DIR
+    _core.TOOL_DEFS_DIR = registry_path.parent / "tool_defs" if registry_path.name == "agent-tools.yaml" else registry_path
+    registry._reset_manager()
 
     try:
         print(validate_registry())
     finally:
-        reg.REGISTRY_FILE = original
+        _core.TOOL_DEFS_DIR = original
+        registry._reset_manager()
 
     return 0
 
