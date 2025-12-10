@@ -47,4 +47,3 @@ class TestUvxFunctional:
 
         assert result.returncode == 0, f"Command failed: {result.stderr}"
         assert "Validated" in result.stdout
-
