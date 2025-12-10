@@ -22,34 +22,38 @@ class TestCursorInstallButton:
         return readme_path.read_text()
 
     @pytest.fixture
-    def cursor_deeplink(self, readme_content: str) -> str:
-        """Extract the Cursor deeplink URL from README."""
-        # Match href="cursor://..." in the README
-        match = re.search(r'href="(cursor://[^"]+)"', readme_content)
-        assert match, "No Cursor deeplink found in README"
+    def cursor_install_url(self, readme_content: str) -> str:
+        """Extract the Cursor install URL from README."""
+        # Match the cursor.com/install-mcp URL in markdown link format
+        match = re.search(r'\]\((https://cursor\.com/install-mcp\?[^)]+)\)', readme_content)
+        assert match, "No Cursor install URL found in README"
         return match.group(1)
 
-    def test_cursor_deeplink_has_correct_protocol(self, cursor_deeplink: str):
-        """Verify the deeplink uses cursor:// protocol."""
-        parsed = urlparse(cursor_deeplink)
-        assert parsed.scheme == "cursor"
+    def test_cursor_url_uses_https(self, cursor_install_url: str):
+        """Verify the install URL uses HTTPS."""
+        parsed = urlparse(cursor_install_url)
+        assert parsed.scheme == "https"
 
-    def test_cursor_deeplink_has_correct_host_and_path(self, cursor_deeplink: str):
-        """Verify the deeplink points to MCP install endpoint."""
-        parsed = urlparse(cursor_deeplink)
-        assert parsed.netloc == "anysphere.cursor-deeplink"
-        assert parsed.path == "/mcp/install"
+    def test_cursor_url_has_correct_host(self, cursor_install_url: str):
+        """Verify the URL points to cursor.com."""
+        parsed = urlparse(cursor_install_url)
+        assert parsed.netloc == "cursor.com"
 
-    def test_cursor_deeplink_has_name_param(self, cursor_deeplink: str):
-        """Verify the deeplink includes the name parameter."""
-        parsed = urlparse(cursor_deeplink)
+    def test_cursor_url_has_correct_path(self, cursor_install_url: str):
+        """Verify the URL uses the install-mcp endpoint."""
+        parsed = urlparse(cursor_install_url)
+        assert parsed.path == "/install-mcp"
+
+    def test_cursor_url_has_name_param(self, cursor_install_url: str):
+        """Verify the URL includes the name parameter."""
+        parsed = urlparse(cursor_install_url)
         params = parse_qs(parsed.query)
         assert "name" in params
         assert params["name"][0] == "agent-tools"
 
-    def test_cursor_deeplink_has_valid_base64_config(self, cursor_deeplink: str):
+    def test_cursor_url_has_valid_base64_config(self, cursor_install_url: str):
         """Verify the config parameter is valid base64."""
-        parsed = urlparse(cursor_deeplink)
+        parsed = urlparse(cursor_install_url)
         params = parse_qs(parsed.query)
         assert "config" in params
 
@@ -58,9 +62,9 @@ class TestCursorInstallButton:
         decoded = base64.b64decode(config_b64)
         assert decoded  # Non-empty
 
-    def test_cursor_deeplink_config_is_valid_json(self, cursor_deeplink: str):
+    def test_cursor_url_config_is_valid_json(self, cursor_install_url: str):
         """Verify the decoded config is valid JSON."""
-        parsed = urlparse(cursor_deeplink)
+        parsed = urlparse(cursor_install_url)
         params = parse_qs(parsed.query)
         config_b64 = params["config"][0]
 
@@ -68,9 +72,9 @@ class TestCursorInstallButton:
         config = json.loads(decoded)
         assert isinstance(config, dict)
 
-    def test_cursor_deeplink_config_has_command(self, cursor_deeplink: str):
+    def test_cursor_url_config_has_command(self, cursor_install_url: str):
         """Verify the config specifies a command."""
-        parsed = urlparse(cursor_deeplink)
+        parsed = urlparse(cursor_install_url)
         params = parse_qs(parsed.query)
         config_b64 = params["config"][0]
 
@@ -78,9 +82,9 @@ class TestCursorInstallButton:
         assert "command" in config
         assert config["command"] == "uvx"
 
-    def test_cursor_deeplink_config_has_args(self, cursor_deeplink: str):
+    def test_cursor_url_config_has_args(self, cursor_install_url: str):
         """Verify the config includes args with proper structure."""
-        parsed = urlparse(cursor_deeplink)
+        parsed = urlparse(cursor_install_url)
         params = parse_qs(parsed.query)
         config_b64 = params["config"][0]
 
@@ -93,4 +97,3 @@ class TestCursorInstallButton:
         assert "--from" in args
         assert any("github.com/amp-rh/agent-tools" in arg for arg in args)
         assert "agent-tools-server" in args
-
