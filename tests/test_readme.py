@@ -1,0 +1,96 @@
+"""Tests for README.md content."""
+from __future__ import annotations
+
+import base64
+import json
+import re
+from pathlib import Path
+from urllib.parse import parse_qs, urlparse
+
+import pytest
+
+PROJECT_ROOT = Path(__file__).parent.parent
+
+
+class TestCursorInstallButton:
+    """Tests for the Cursor MCP install button in README."""
+
+    @pytest.fixture
+    def readme_content(self) -> str:
+        """Read README.md content."""
+        readme_path = PROJECT_ROOT / "README.md"
+        return readme_path.read_text()
+
+    @pytest.fixture
+    def cursor_deeplink(self, readme_content: str) -> str:
+        """Extract the Cursor deeplink URL from README."""
+        # Match href="cursor://..." in the README
+        match = re.search(r'href="(cursor://[^"]+)"', readme_content)
+        assert match, "No Cursor deeplink found in README"
+        return match.group(1)
+
+    def test_cursor_deeplink_has_correct_protocol(self, cursor_deeplink: str):
+        """Verify the deeplink uses cursor:// protocol."""
+        parsed = urlparse(cursor_deeplink)
+        assert parsed.scheme == "cursor"
+
+    def test_cursor_deeplink_has_correct_host_and_path(self, cursor_deeplink: str):
+        """Verify the deeplink points to MCP install endpoint."""
+        parsed = urlparse(cursor_deeplink)
+        assert parsed.netloc == "anysphere.cursor-deeplink"
+        assert parsed.path == "/mcp/install"
+
+    def test_cursor_deeplink_has_name_param(self, cursor_deeplink: str):
+        """Verify the deeplink includes the name parameter."""
+        parsed = urlparse(cursor_deeplink)
+        params = parse_qs(parsed.query)
+        assert "name" in params
+        assert params["name"][0] == "agent-tools"
+
+    def test_cursor_deeplink_has_valid_base64_config(self, cursor_deeplink: str):
+        """Verify the config parameter is valid base64."""
+        parsed = urlparse(cursor_deeplink)
+        params = parse_qs(parsed.query)
+        assert "config" in params
+
+        config_b64 = params["config"][0]
+        # Should not raise on valid base64
+        decoded = base64.b64decode(config_b64)
+        assert decoded  # Non-empty
+
+    def test_cursor_deeplink_config_is_valid_json(self, cursor_deeplink: str):
+        """Verify the decoded config is valid JSON."""
+        parsed = urlparse(cursor_deeplink)
+        params = parse_qs(parsed.query)
+        config_b64 = params["config"][0]
+
+        decoded = base64.b64decode(config_b64)
+        config = json.loads(decoded)
+        assert isinstance(config, dict)
+
+    def test_cursor_deeplink_config_has_command(self, cursor_deeplink: str):
+        """Verify the config specifies a command."""
+        parsed = urlparse(cursor_deeplink)
+        params = parse_qs(parsed.query)
+        config_b64 = params["config"][0]
+
+        config = json.loads(base64.b64decode(config_b64))
+        assert "command" in config
+        assert config["command"] == "uvx"
+
+    def test_cursor_deeplink_config_has_args(self, cursor_deeplink: str):
+        """Verify the config includes args with proper structure."""
+        parsed = urlparse(cursor_deeplink)
+        params = parse_qs(parsed.query)
+        config_b64 = params["config"][0]
+
+        config = json.loads(base64.b64decode(config_b64))
+        assert "args" in config
+        assert isinstance(config["args"], list)
+
+        # Should include --from and the git URL
+        args = config["args"]
+        assert "--from" in args
+        assert any("github.com/amp-rh/agent-tools" in arg for arg in args)
+        assert "agent-tools-server" in args
+
