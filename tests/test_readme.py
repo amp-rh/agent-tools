@@ -92,8 +92,7 @@ class TestCursorInstallButton:
         assert "args" in config
         assert isinstance(config["args"], list)
 
-        # Should include --from and the git URL
+        # Should include git URL and server subcommand
         args = config["args"]
-        assert "--from" in args
         assert any("github.com/amp-rh/agent-tools" in arg for arg in args)
-        assert "agent-tools-server" in args
+        assert "server" in args

@@ -2,7 +2,7 @@
 
 A self-modifying tool registry that lets AI agents create and manage their own tools via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/).
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=agent-tools&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2FtcC1yaC9hZ2VudC10b29scy5naXQiLCJhZ2VudC10b29scy1zZXJ2ZXIiXX0=)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=agent-tools&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJnaXQraHR0cHM6Ly9naXRodWIuY29tL2FtcC1yaC9hZ2VudC10b29scy5naXQiLCJzZXJ2ZXIiXX0=)
 
 ## What It Does
 
