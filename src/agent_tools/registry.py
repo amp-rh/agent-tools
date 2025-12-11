@@ -8,9 +8,10 @@ from pathlib import Path
 
 import agent_tools._core as _core
 from agent_tools._core import ToolDefinition, ToolParameter, ToolRegistry
-from agent_tools._template import INIT_TEMPLATE, STUB_TEMPLATE, TEST_TEMPLATE
+from agent_tools._template import COMMAND_TEMPLATE, INIT_TEMPLATE, STUB_TEMPLATE, TEST_TEMPLATE
 
 __all__ = [
+    "CommandGenerator",
     "StubGenerator",
     "ToolManager",
     "add_tool",
@@ -19,6 +20,7 @@ __all__ = [
     "list_tools",
     "validate_registry",
     "execute_tool",
+    "generate_commands",
 ]
 
 
@@ -108,6 +110,90 @@ class StubGenerator:
 
 
 @dataclass
+class CommandGenerator:
+    """Generates Cursor command files from tool definitions."""
+
+    output_dir: Path
+
+    def _format_title(self, tool: ToolDefinition) -> str:
+        """Convert tool name to human-readable title."""
+        # Convert 'my-prs' to 'My PRs', 'lint' to 'Lint'
+        # Special acronyms that should be styled specifically
+        acronyms = {"prs": "PRs", "api": "API", "url": "URL", "id": "ID"}
+        words = tool.tool_name.replace("-", " ").split()
+        return " ".join(acronyms.get(word.lower(), word.capitalize()) for word in words)
+
+    def _format_parameters(self, tool: ToolDefinition) -> str:
+        """Format parameters as markdown list."""
+        if not tool.parameters:
+            return "None"
+
+        lines = []
+        for param in tool.parameters:
+            required = "required" if param.required else "optional"
+            desc = param.description or "No description"
+            lines.append(f"- **{param.name}** ({required}): {desc}")
+        return "\n".join(lines)
+
+    def _format_example(self, tool: ToolDefinition) -> str:
+        """Generate a simple usage example."""
+        if not tool.parameters:
+            return ""
+        # Generate example based on first required parameter or first optional
+        required_params = [p for p in tool.parameters if p.required]
+        if required_params:
+            return f'\n\nExample: "Run {tool.tool_name.replace("-", " ")} with {required_params[0].name}"'
+        return ""
+
+    def generate_command(self, tool: ToolDefinition) -> str:
+        """Generate markdown content for a single tool."""
+        return COMMAND_TEMPLATE.format(
+            title=self._format_title(tool),
+            description=tool.description.strip(),
+            parameters=self._format_parameters(tool),
+            tool_name=tool.name,
+            example=self._format_example(tool),
+        )
+
+    def generate_one(self, tool: ToolDefinition) -> Path:
+        """Generate command file for a single tool."""
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        content = self.generate_command(tool)
+        command_file = self.output_dir / f"{tool.tool_name}.md"
+        command_file.write_text(content)
+        return command_file
+
+    def generate_all(self, tools: list[ToolDefinition]) -> list[Path]:
+        """Generate command files for all tools."""
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        created = []
+        for tool in tools:
+            path = self.generate_one(tool)
+            created.append(path)
+        return created
+
+    def sync(self, tools: list[ToolDefinition]) -> dict[str, list[Path]]:
+        """Sync command files: create missing, remove stale."""
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Track expected files
+        expected_files = {f"{tool.tool_name}.md" for tool in tools}
+
+        # Generate all commands
+        created = self.generate_all(tools)
+
+        # Find and remove stale files
+        removed = []
+        if self.output_dir.exists():
+            for existing in self.output_dir.glob("*.md"):
+                if existing.name not in expected_files:
+                    existing.unlink()
+                    removed.append(existing)
+
+        return {"created": created, "removed": removed}
+
+
+@dataclass
 class ValidationResult:
     """Result of registry validation."""
 
@@ -143,9 +229,11 @@ class ToolManager:
         self,
         stub_generator: StubGenerator | None = None,
         tool_defs_dir: Path | None = None,
+        commands_dir: Path | None = None,
     ):
         self._stub_generator = stub_generator or StubGenerator(_core.SRC_DIR, _core.TESTS_DIR)
         self._tool_defs_dir = tool_defs_dir or _core.TOOL_DEFS_DIR
+        self._commands_dir = commands_dir
 
     def _load_registry(self) -> ToolRegistry:
         data = _core.load_registry(self._tool_defs_dir)
@@ -182,12 +270,24 @@ class ToolManager:
         test_file = self._stub_generator.create_test(tool)
         tool_def_file = _core.save_tool(name, tool.to_dict(), self._tool_defs_dir)
 
+        # Generate Cursor command if commands_dir is configured
+        command_file = None
+        if self._commands_dir:
+            cmd_gen = CommandGenerator(self._commands_dir)
+            command_file = cmd_gen.generate_one(tool)
+
+        files_created = [
+            f"  {tool_def_file.relative_to(_core.PROJECT_ROOT)}  ← Tool definition",
+            f"  {module_file.relative_to(_core.PROJECT_ROOT)}  ← Implement here",
+            f"  {test_file.relative_to(_core.PROJECT_ROOT)}  ← Add tests",
+        ]
+        if command_file:
+            files_created.append(f"  {command_file.relative_to(_core.PROJECT_ROOT)}  ← Cursor command")
+
         return f"""Created tool: {name}
 
 Files created:
-  {tool_def_file.relative_to(_core.PROJECT_ROOT)}  ← Tool definition
-  {module_file.relative_to(_core.PROJECT_ROOT)}  ← Implement here
-  {test_file.relative_to(_core.PROJECT_ROOT)}  ← Add tests
+{chr(10).join(files_created)}
 
 Next steps:
   1. Implement the function in {tool.function_name}.py
@@ -362,3 +462,42 @@ def validate_registry() -> str:
 def execute_tool(name: str, params: str) -> str:
     """Execute any tool by name."""
     return _get_manager().execute(name, params)
+
+
+def generate_commands(output_dir: Path | str | None = None, sync: bool = False) -> str:
+    """Generate Cursor command files for all tools.
+
+    Args:
+        output_dir: Directory to write commands to (default: .cursor/commands)
+        sync: If True, remove stale command files
+
+    Returns:
+        Summary of generated commands.
+    """
+    if output_dir is None:
+        output_dir = Path.cwd() / ".cursor" / "commands"
+    elif isinstance(output_dir, str):
+        output_dir = Path(output_dir)
+
+    manager = _get_manager()
+    registry = manager._load_registry()
+    generator = CommandGenerator(output_dir)
+
+    if sync:
+        result = generator.sync(registry.tools)
+        created = result["created"]
+        removed = result["removed"]
+        lines = [f"Generated {len(created)} commands to {output_dir}"]
+        if removed:
+            lines.append(f"Removed {len(removed)} stale commands")
+    else:
+        created = generator.generate_all(registry.tools)
+        lines = [f"Generated {len(created)} commands to {output_dir}"]
+
+    # List created files
+    if created:
+        lines.append("\nCommands:")
+        for path in sorted(created):
+            lines.append(f"  /{path.stem}")
+
+    return "\n".join(lines)
