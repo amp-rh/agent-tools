@@ -14,7 +14,28 @@ This project uses **focused contexts** to keep agent context windows small and r
 | @.cursor/resources | Reference materials (local-only) | External docs, guides |
 | @docs | Existing documentation | discovery-problem.md |
 
-> **Note**: The `.cursor/` directories are gitignored and local-only. They persist across chat sessions but are not committed to the repository.
+---
+
+## 📝 Agent Scratchpad: `.cursor/`
+
+**Use `.cursor/` as your working memory.** This directory is gitignored and persists across sessions.
+
+| Use For | Example Files |
+|---------|---------------|
+| Scratchpad notes | `.cursor/notes.md`, `.cursor/scratch.txt` |
+| Task tracking | `.cursor/todos.md`, `.cursor/progress.md` |
+| Learnings & insights | `.cursor/learnings.md`, `.cursor/patterns.md` |
+| Investigation logs | `.cursor/discovery/*.md` |
+| Data & inventories | `.cursor/inventory/*.csv` |
+
+**Rules:**
+- ✅ Create any files you need in `.cursor/`
+- ✅ Use for drafts, experiments, temporary work
+- ✅ Track progress across sessions
+- ❌ **Never commit** - the directory is gitignored
+- ❌ Don't reference in code that gets committed
+
+> **Tip**: Start complex tasks by creating a plan in `.cursor/plan.md`, update as you go.
 
 ---
 
@@ -74,8 +95,8 @@ Write descriptions as if they're the only documentation. Include:
 | File | Purpose |
 |------|---------|
 | `tool_defs/` | Tool definitions (YAML, single source of truth) |
-| `src/agent_tools/registry.py` | Meta-tool implementation |
-| `src/agent_tools/server.py` | MCP server |
+| `src/agent_tools/registry/` | Registry tools (add, remove, reload, etc.) |
+| `src/agent_tools/server.py` | MCP server (tools, prompts, resources) |
 | `src/agent_tools/_template.py` | Stub template reference |
 
 ## Registry Tools
@@ -87,6 +108,8 @@ Write descriptions as if they're the only documentation. Include:
 | `registry.update` | Update existing tool definition |
 | `registry.list` | List all tools (hierarchical YAML) |
 | `registry.validate` | Check for errors in registry |
+| `registry.execute` | Execute any tool by name |
+| `registry.reload` | Clear module cache (hot-reload tools) |
 
 ## Namespace Convention
 
@@ -103,16 +126,20 @@ file.read-json       → src/agent_tools/file/read_json.py
 ```
 Think: "Is this repeatable?"
     ↓ yes
+git checkout -b tool/<namespace>-<name>
+    ↓
 registry.add(...)
     ↓
 Implement stub
     ↓
 uv run pytest
     ↓
-Restart MCP
+git commit & push
     ↓
-Use tool
+Create PR
 ```
+
+See @CONTRIBUTING.md for branch naming conventions and PR process.
 
 ---
 
@@ -132,6 +159,7 @@ Use tool
 
 ### Quick Links
 
+- **Contribution guide**: @CONTRIBUTING.md - Branching, code style, PR process
 - **Discovery details**: @.cursor/discovery/AGENTS.md
 - **Remediation guide**: @.cursor/remediation/AGENTS.md
 - **Inventory data**: @.cursor/inventory/AGENTS.md
