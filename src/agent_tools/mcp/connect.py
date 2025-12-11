@@ -106,7 +106,7 @@ def _run_in_thread(coro):
     result = [None]
     error = [None]
 
-    def thread_target():
+    def _execute_in_loop():
         try:
             # Create a completely fresh event loop in this thread
             new_loop = asyncio.new_event_loop()
@@ -118,7 +118,7 @@ def _run_in_thread(coro):
         except Exception as e:
             error[0] = e
 
-    thread = threading.Thread(target=thread_target)
+    thread = threading.Thread(target=_execute_in_loop)
     thread.start()
     thread.join(timeout=120)
 

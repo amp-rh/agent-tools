@@ -8,14 +8,9 @@ from agent_tools import _core
 __all__ = ["start_here"]
 
 
-def _load_registry() -> dict[str, Any]:
-    """Load the registry from the configured tool_defs directory."""
-    return _core.load_registry()
-
-
 def _format_tools() -> str:
     """Format all tools for display."""
-    registry = _load_registry()
+    registry = _core.load_registry()
     tools = registry.get("tools", [])
 
     # Organize by namespace
