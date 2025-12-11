@@ -168,6 +168,50 @@ Then (using TDD):
 4. Refactor if needed, keeping tests green
 5. Run `uv run pytest tests/test_namespace/test_tool_name.py`
 
+## Tool Aliases & Workflows
+
+### Namespace Aliases
+
+It's acceptable to expose the same tool under multiple namespace combinations for discoverability. An agent thinking "debug this" vs "observe this" should find relevant tools either way.
+
+**Use symlinks to avoid code duplication:**
+
+```bash
+# Primary location
+tool_defs/observe/session.yaml
+src/agent_tools/observe/session.py
+
+# Alias via symlinks
+cd tool_defs/debug && ln -s ../observe/session.yaml session.yaml
+cd src/agent_tools/debug && ln -s ../observe/session.py session.py
+```
+
+**Rules:**
+- Primary location has the actual files
+- Aliases are relative symlinks pointing to primary
+- Tests only exist for the primary location
+- Both names work identically at runtime
+
+### Workflow References
+
+Use Cursor `@` document links in tool descriptions to reference related tools that chain well together:
+
+```yaml
+# In tool_defs/code/refactor.yaml
+description: |
+  Refactor code using structured patterns.
+  
+  Often used with @tool_defs/code/lint.yaml to verify changes
+  and @tool_defs/think/about.yaml for complex decisions.
+```
+
+This helps agents discover tool combinations without hardcoding workflows.
+
+**When to add references:**
+- Tools that are commonly used in sequence
+- Tools that provide complementary functionality
+- Tools that validate or extend each other's output
+
 ## Commit Messages
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
