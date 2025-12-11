@@ -126,16 +126,20 @@ file.read-json       → src/agent_tools/file/read_json.py
 ```
 Think: "Is this repeatable?"
     ↓ yes
+git checkout -b tool/<namespace>-<name>
+    ↓
 registry.add(...)
     ↓
 Implement stub
     ↓
 uv run pytest
     ↓
-Restart MCP
+git commit & push
     ↓
-Use tool
+Create PR
 ```
+
+See @CONTRIBUTING.md for branch naming conventions and PR process.
 
 ---
 
@@ -155,6 +159,7 @@ Use tool
 
 ### Quick Links
 
+- **Contribution guide**: @CONTRIBUTING.md - Branching, code style, PR process
 - **Discovery details**: @.cursor/discovery/AGENTS.md
 - **Remediation guide**: @.cursor/remediation/AGENTS.md
 - **Inventory data**: @.cursor/inventory/AGENTS.md

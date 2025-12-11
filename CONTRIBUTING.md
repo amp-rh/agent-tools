@@ -44,19 +44,77 @@ src/agent_tools/namespace/tool_name.py
 tests/test_namespace/test_tool_name.py
 ```
 
-## Adding Tools
+## Branching
 
-Use the registry to create new tools:
+**Always create a new branch for changes.** Never commit directly to `main` or `dev`.
+
+### Branch Naming Convention
 
 ```
+<type>/<namespace>-<description>
+```
+
+| Type | Use For | Example |
+|------|---------|---------|
+| `tool/` | New tools | `tool/github-list-issues` |
+| `feat/` | Features (non-tool) | `feat/mcp-resources` |
+| `fix/` | Bug fixes | `fix/reload-cache-clear` |
+| `refactor/` | Code improvements | `refactor/registry-structure` |
+| `docs/` | Documentation | `docs/contribution-guide` |
+
+### Examples
+
+```bash
+# Adding a new tool
+git checkout -b tool/jira-create-issue
+
+# Adding a feature
+git checkout -b feat/observe-tracing
+
+# Fixing a bug
+git checkout -b fix/server-startup
+
+# Refactoring
+git checkout -b refactor/duplicate-removal
+```
+
+## Adding Tools
+
+**Each new tool should be in its own branch** using the `tool/<namespace>-<tool-name>` convention.
+
+### Workflow
+
+```bash
+# 1. Create branch
+git checkout dev
+git pull origin dev
+git checkout -b tool/mytools-greet
+
+# 2. Create tool via registry
 registry.add(
-  name="namespace.tool-name",
+  name="mytools.greet",
   description="What it does",
   parameters='[{"name": "param", "type": "string", "required": true}]'
 )
+
+# 3. Implement, test, commit
+# ... edit src/agent_tools/mytools/greet.py ...
+uv run pytest tests/test_mytools/test_greet.py
+git add -A
+git commit -m "feat(mytools): add greet tool"
+
+# 4. Push and create PR
+git push origin tool/mytools-greet
+gh pr create --base dev
 ```
 
-This creates:
+### What Gets Created
+
+```
+registry.add(name="namespace.tool-name", ...)
+```
+
+Creates:
 - `tool_defs/namespace/tool-name.yaml` - Definition
 - `src/agent_tools/namespace/tool_name.py` - Implementation stub
 - `tests/test_namespace/test_tool_name.py` - Test stub
@@ -95,13 +153,15 @@ docs: update README with new tools
 ## Pull Requests
 
 1. **Branch from `dev`**: Create feature branches from `dev`, not `main`
-2. **Keep focused**: One feature/fix per PR
-3. **Tests required**: All new code needs tests
-4. **Update docs**: If adding features, update relevant docs
-5. **Pass CI**: All tests must pass
+2. **Use naming convention**: See [Branching](#branching) section
+3. **Keep focused**: One tool/feature/fix per PR
+4. **Tests required**: All new code needs tests
+5. **Update docs**: If adding features, update relevant docs
+6. **Pass CI**: All tests must pass
 
 ### PR Checklist
 
+- [ ] Branch follows naming convention (`tool/`, `feat/`, `fix/`, etc.)
 - [ ] Tests pass (`uv run pytest`)
 - [ ] Linting passes (`uv run ruff check .`)
 - [ ] Docs updated if needed
