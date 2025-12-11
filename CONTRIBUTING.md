@@ -28,12 +28,54 @@ uv run ruff format .         # Format code
 
 ## Testing
 
-All changes require tests. Run the full suite before submitting:
+All changes require tests. We encourage **Test-Driven Development (TDD)**.
+
+### TDD Workflow
+
+```
+1. Write a failing test first
+2. Write minimal code to make it pass
+3. Refactor while keeping tests green
+4. Repeat
+```
+
+**Why TDD for tools?**
+- Forces you to think about the interface before implementation
+- Tests serve as executable documentation
+- Catches edge cases early
+- Makes refactoring safe
+
+### Example TDD Session
+
+```python
+# 1. Write the test first (tests/test_mytools/test_greet.py)
+def test_greet_returns_greeting():
+    result = greet("Alice")
+    assert result == "Hello, Alice!"
+
+def test_greet_handles_empty_name():
+    result = greet("")
+    assert "Hello" in result
+
+# 2. Run tests - they fail (good!)
+# uv run pytest tests/test_mytools/test_greet.py
+
+# 3. Implement just enough to pass
+def greet(name: str) -> str:
+    return f"Hello, {name or 'stranger'}!"
+
+# 4. Run tests - they pass
+# 5. Refactor if needed, tests stay green
+```
+
+### Running Tests
 
 ```bash
 uv run pytest                    # All tests
 uv run pytest tests/test_X.py    # Specific test file
 uv run pytest -v --tb=short      # Verbose with short tracebacks
+uv run pytest -x                 # Stop on first failure
+uv run pytest --lf               # Run last failed tests
 ```
 
 ### Test Structure
@@ -119,10 +161,12 @@ Creates:
 - `src/agent_tools/namespace/tool_name.py` - Implementation stub
 - `tests/test_namespace/test_tool_name.py` - Test stub
 
-Then:
-1. Implement the function (replace `raise NotImplementedError`)
-2. Write tests
-3. Run `uv run pytest tests/test_namespace/test_tool_name.py`
+Then (using TDD):
+1. **Write tests first** in `tests/test_namespace/test_tool_name.py`
+2. Run tests - verify they fail (stub raises `NotImplementedError`)
+3. **Implement** the function to make tests pass
+4. Refactor if needed, keeping tests green
+5. Run `uv run pytest tests/test_namespace/test_tool_name.py`
 
 ## Commit Messages
 
