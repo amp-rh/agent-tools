@@ -41,14 +41,14 @@ Answer these questions about the pattern:
 - What inputs vary each time? (these become parameters)
 - What stays the same? (this is the logic)
 
-### 2. Tool or Prompt?
+### 2. Tool, Prompt, or Resource?
 
-| Create a **Tool** when... | Create a **Prompt** when... |
-|---------------------------|----------------------------|
-| Needs code execution | Just guides thinking/workflow |
-| Has variable inputs (parameters) | Static text, no parameters |
-| Returns computed results | Provides a reusable starting point |
-| Example: `code.refactor` | Example: `agent-tools-workflow` |
+| **Tool** | **Prompt** | **Resource** |
+|----------|------------|--------------|
+| Needs code execution | Guides thinking/workflow | Exposes data for reading |
+| Has variable inputs | Static text, no params | Static or computed data |
+| Returns computed results | Reusable starting point | Reference information |
+| Example: `code.refactor` | Example: `agent-tools-workflow` | Example: `agent-tools://registry` |
 
 ---
 
@@ -113,5 +113,32 @@ if name == "your-prompt-name":
 **Note**: Prompts are only used when explicitly requested by the client. They don't auto-inject.
 
 ---
-*Extract what's reusable. Tool = code. Prompt = guidance. One job each.*
+
+## Option C: Create an MCP Resource
+
+MCP resources expose data that agents can read. Use for reference data, configs, or computed summaries.
+
+**To add a resource**, edit `src/agent_tools/server.py`:
+
+1. Add to `_list_resources()`:
+```python
+Resource(
+    uri="agent-tools://your-resource",
+    name="Your Resource Name",
+    description="What this resource contains",
+    mimeType="text/yaml",  # or text/plain, application/json
+)
+```
+
+2. Add to `_read_resource()`:
+```python
+if uri == "agent-tools://your-resource":
+    content = "your content here"
+    return [TextResourceContents(uri=uri, mimeType="text/yaml", text=content)]
+```
+
+**Note**: Resources are read-only data. Use tools for actions, prompts for guidance, resources for data.
+
+---
+*Extract what's reusable. Tool = code. Prompt = guidance. Resource = data.*
 """

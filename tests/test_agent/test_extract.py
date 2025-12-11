@@ -53,10 +53,12 @@ class TestExtract:
         assert "inputs vary" in result.lower()
         assert "parameters" in result.lower()
 
-    def test_extract_explains_tool_vs_prompt(self):
-        """Verify extract helps decide between tool and prompt."""
+    def test_extract_explains_tool_vs_prompt_vs_resource(self):
+        """Verify extract helps decide between tool, prompt, and resource."""
         result = extract("Created a reusable workflow")
 
-        assert "Tool or Prompt?" in result
+        assert "Tool, Prompt, or Resource?" in result
         assert "code execution" in result.lower()
         assert "guides thinking" in result.lower()
+        assert "exposes data" in result.lower()
+        assert "Option C: Create an MCP Resource" in result

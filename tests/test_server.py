@@ -51,3 +51,34 @@ class TestPrompts:
         assert "registry-add" in WORKFLOW_PROMPT
         assert "I should" in WORKFLOW_PROMPT
         assert "My job" in WORKFLOW_PROMPT
+
+
+class TestResources:
+    """Tests for MCP resource functionality."""
+
+    @pytest.mark.asyncio
+    async def test_list_resources_returns_registry(self, server: AgentToolsServer):
+        """Verify list_resources includes the registry resource."""
+        resources = await server._list_resources()
+
+        assert len(resources) == 1
+        assert str(resources[0].uri) == "agent-tools://registry"
+        assert resources[0].name == "Tool Registry"
+        assert resources[0].mimeType == "text/yaml"
+
+    @pytest.mark.asyncio
+    async def test_read_resource_registry(self, server: AgentToolsServer):
+        """Verify read_resource returns registry content."""
+        result = await server._read_resource("agent-tools://registry")
+
+        assert len(result) == 1
+        assert str(result[0].uri) == "agent-tools://registry"
+        assert result[0].mimeType == "text/yaml"
+        # Empty server has no tools, but should still return valid YAML
+        assert isinstance(result[0].text, str)
+
+    @pytest.mark.asyncio
+    async def test_read_resource_unknown_raises(self, server: AgentToolsServer):
+        """Verify read_resource raises for unknown URIs."""
+        with pytest.raises(ValueError, match="Unknown resource"):
+            await server._read_resource("agent-tools://unknown")

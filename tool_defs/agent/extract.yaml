@@ -1,14 +1,14 @@
 name: agent.extract
-description: 'Extract reusable patterns from conversation as tools or MCP prompts.
+description: 'Extract reusable patterns as tools, prompts, or resources.
 
   Use this after completing a task to identify reusable patterns. Returns structured
   guidance that helps you:
 
   - Identify what''s repeatable
 
-  - Decide whether to create a tool (code) or MCP prompt (guidance)
+  - Decide: tool (code), prompt (guidance), or resource (data)
 
-  - Generate the appropriate registry.add command or prompt definition
+  - Generate the appropriate definition
 
   Call this when you notice yourself doing something that could be automated or
   reused.'
