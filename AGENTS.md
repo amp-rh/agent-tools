@@ -14,7 +14,28 @@ This project uses **focused contexts** to keep agent context windows small and r
 | @.cursor/resources | Reference materials (local-only) | External docs, guides |
 | @docs | Existing documentation | discovery-problem.md |
 
-> **Note**: The `.cursor/` directories are gitignored and local-only. They persist across chat sessions but are not committed to the repository.
+---
+
+## 📝 Agent Scratchpad: `.cursor/`
+
+**Use `.cursor/` as your working memory.** This directory is gitignored and persists across sessions.
+
+| Use For | Example Files |
+|---------|---------------|
+| Scratchpad notes | `.cursor/notes.md`, `.cursor/scratch.txt` |
+| Task tracking | `.cursor/todos.md`, `.cursor/progress.md` |
+| Learnings & insights | `.cursor/learnings.md`, `.cursor/patterns.md` |
+| Investigation logs | `.cursor/discovery/*.md` |
+| Data & inventories | `.cursor/inventory/*.csv` |
+
+**Rules:**
+- ✅ Create any files you need in `.cursor/`
+- ✅ Use for drafts, experiments, temporary work
+- ✅ Track progress across sessions
+- ❌ **Never commit** - the directory is gitignored
+- ❌ Don't reference in code that gets committed
+
+> **Tip**: Start complex tasks by creating a plan in `.cursor/plan.md`, update as you go.
 
 ---
 

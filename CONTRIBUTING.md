@@ -134,9 +134,20 @@ Only these tools are directly exposed via MCP (others require `registry.execute`
 - `registry.reload`
 - `observe.log`, `observe.trace-call`, `observe.session`
 
+## The `.cursor/` Directory
+
+The `.cursor/` directory is **gitignored** and used as a local scratchpad:
+- Agent notes, todos, learnings
+- Investigation logs and discoveries
+- Temporary data and experiments
+
+**Do not commit anything from `.cursor/`** - it's for local working memory only.
+
+If you find valuable patterns or learnings, move them to proper docs before they're lost.
+
 ## Questions?
 
 Open an issue or check existing docs:
-- `AGENTS.md` - Agent-focused project overview
+- `AGENTS.md` - Agent-focused project overview  
 - `docs/discovery-problem.md` - Analysis of agent tool discovery
 
