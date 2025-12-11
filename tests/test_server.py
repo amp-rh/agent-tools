@@ -5,7 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from agent_tools.server import WORKFLOW_PROMPT, AgentToolsServer, ServerConfig
+from agent_tools.server import (
+    MCP_FROM_COMMANDS_PROMPT,
+    WORKFLOW_PROMPT,
+    AgentToolsServer,
+    ServerConfig,
+)
 
 
 @pytest.fixture
@@ -21,13 +26,14 @@ class TestPrompts:
     """Tests for MCP prompt functionality."""
 
     @pytest.mark.asyncio
-    async def test_list_prompts_returns_workflow(self, server: AgentToolsServer):
-        """Verify list_prompts includes the workflow prompt."""
+    async def test_list_prompts_returns_all(self, server: AgentToolsServer):
+        """Verify list_prompts includes all prompts."""
         prompts = await server._list_prompts()
 
-        assert len(prompts) == 1
-        assert prompts[0].name == "agent-tools-workflow"
-        assert "check tools first" in prompts[0].description
+        assert len(prompts) == 2
+        names = [p.name for p in prompts]
+        assert "agent-tools-workflow" in names
+        assert "mcp-from-commands" in names
 
     @pytest.mark.asyncio
     async def test_get_prompt_returns_workflow_content(self, server: AgentToolsServer):
@@ -51,6 +57,23 @@ class TestPrompts:
         assert "registry-add" in WORKFLOW_PROMPT
         assert "I should" in WORKFLOW_PROMPT
         assert "My job" in WORKFLOW_PROMPT
+
+    @pytest.mark.asyncio
+    async def test_get_mcp_from_commands_prompt(self, server: AgentToolsServer):
+        """Verify mcp-from-commands prompt returns extraction workflow."""
+        result = await server._get_prompt("mcp-from-commands", None)
+
+        assert result.messages
+        assert len(result.messages) == 1
+        text = result.messages[0].content.text
+        assert "registry.add" in text
+        assert "TDD" in text
+
+    def test_mcp_from_commands_prompt_content(self):
+        """Verify mcp-from-commands prompt contains workflow steps."""
+        assert "Extraction Workflow" in MCP_FROM_COMMANDS_PROMPT
+        assert "registry.add" in MCP_FROM_COMMANDS_PROMPT
+        assert "subprocess" in MCP_FROM_COMMANDS_PROMPT
 
 
 class TestResources:

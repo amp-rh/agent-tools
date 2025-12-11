@@ -1,0 +1,19 @@
+name: cursor.sync-commands
+description: 'Synchronize Cursor commands between project and user directories.
+
+
+  Copies command files between .cursor/commands/ (project) and ~/.cursor/commands/
+  (user).
+
+  User commands are available in all Cursor workspaces.'
+module: agent_tools.cursor.sync_commands
+function: sync_commands
+parameters:
+- name: direction
+  type: string
+  description: 'Sync direction: ''to-user'' (default) or ''to-project'''
+  required: false
+- name: filter
+  type: string
+  description: Only sync commands matching this pattern (e.g., 'agent-*')
+  required: false

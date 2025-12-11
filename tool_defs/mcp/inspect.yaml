@@ -1,0 +1,18 @@
+name: mcp.inspect
+description: 'Launch MCP Inspector to interactively test an MCP server.
+
+
+  Runs the MCP Inspector (via npx) and returns the connection URL.
+
+  Can inspect a server from mcp.json by name or run a direct command.'
+module: agent_tools.mcp.inspect
+function: inspect
+parameters:
+- name: server
+  type: string
+  description: Server name from .cursor/mcp.json to inspect
+  required: false
+- name: command
+  type: string
+  description: Direct command to run (e.g., 'uv run agent-tools server')
+  required: false

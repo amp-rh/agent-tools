@@ -1,0 +1,18 @@
+name: notes.todo
+description: 'Add a todo item to the agent notes file (.cursor/notes.md).
+
+
+  Appends a todo item to the TODOs section, creating the file and section if needed.
+
+  Persists across sessions for tracking work.'
+module: agent_tools.notes.todo
+function: todo
+parameters:
+- name: item
+  type: string
+  description: The todo item to add
+  required: true
+- name: details
+  type: string
+  description: Additional context or sub-items (optional)
+  required: false

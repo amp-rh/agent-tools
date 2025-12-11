@@ -49,8 +49,43 @@ uv run pytest        # Run tests
 ## Before Doing Anything
 
 Ask: *"Will I or another agent ever do this again?"*
-- **Yes** → Create a tool first, then use it
+- **Yes** → Create the right primitive first, then use it
 - **No** → Do it manually (rare)
+
+## 🎯 Choose the Right MCP Primitive
+
+**Don't default to tools!** MCP has three primitives - pick the right one:
+
+| Primitive | Use When | Examples |
+|-----------|----------|----------|
+| **Tool** | Needs code execution, has variable inputs, returns computed results | `git.commit`, `code.lint`, `cursor.create-command` |
+| **Prompt** | Provides workflow guidance, structured thinking, reusable templates | `mcp-from-commands`, `agent-tools-workflow` |
+| **Resource** | Exposes read-only data, reference info, computed summaries | `agent-tools://registry` |
+
+### Decision Tree
+
+```
+Is it guidance/workflow/template?
+    → YES → Create a PROMPT (in server.py)
+    → NO ↓
+
+Is it read-only data or reference info?
+    → YES → Create a RESOURCE (in server.py)
+    → NO ↓
+
+Does it need to execute code with variable inputs?
+    → YES → Create a TOOL (via registry.add)
+```
+
+### Where to Add Each
+
+| Primitive | Location |
+|-----------|----------|
+| Tool | `registry.add(...)` → creates YAML + Python |
+| Prompt | Edit `src/agent_tools/server.py` → `_list_prompts()` + `_get_prompt()` |
+| Resource | Edit `src/agent_tools/server.py` → `_list_resources()` + `_read_resource()` |
+
+---
 
 ## How It Works
 

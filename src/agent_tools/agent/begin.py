@@ -128,10 +128,17 @@ def begin(task: str) -> str:
             "This task appears **repeatable**. Before doing it manually:",
             "",
             "1. Check if an existing tool above fits",
-            "2. If not, create a tool with `registry-add` first",
-            "3. Then use the tool",
+            "2. If not, **choose the right MCP primitive**:",
             "",
-            "Every repeatable process becomes a tool.",
+            "   | Primitive | Use When |",
+            "   |-----------|----------|",
+            "   | **Tool** | Needs code execution, variable inputs |",
+            "   | **Prompt** | Workflow guidance, templates, structured thinking |",
+            "   | **Resource** | Read-only data, reference info |",
+            "",
+            "3. Create the primitive, then use it",
+            "",
+            "Don't default to tools! Prompts and resources are often better fits.",
         ])
     elif repeatability == "one-off":
         lines.extend([
@@ -146,7 +153,8 @@ def begin(task: str) -> str:
             "- Will I or another agent do this again?",
             "- Is there a pattern here worth capturing?",
             "",
-            "If yes → create a tool first. If no → proceed manually.",
+            "If yes → create the right primitive (tool/prompt/resource).",
+            "If no → proceed manually.",
         ])
 
     return "\n".join(lines)

@@ -1,0 +1,27 @@
+name: git.update-prs
+description: 'Create or update a PR for the current branch.
+
+
+  Pushes the current branch and creates or updates its associated PR using GitHub
+  CLI.
+
+  Requires `gh` CLI to be installed and authenticated.'
+module: agent_tools.git.update_prs
+function: update_prs
+parameters:
+- name: base
+  type: string
+  description: 'Base branch for the PR (default: dev)'
+  required: false
+- name: title
+  type: string
+  description: PR title. If not provided, uses the branch name.
+  required: false
+- name: body
+  type: string
+  description: PR body/description. Optional.
+  required: false
+- name: draft
+  type: boolean
+  description: 'Create as draft PR (default: false)'
+  required: false

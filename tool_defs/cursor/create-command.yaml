@@ -1,0 +1,30 @@
+name: cursor.create-command
+description: 'Create a new Cursor slash command file.
+
+
+  Creates a .md file in .cursor/commands/ that defines a slash command for Cursor.
+
+  If mcp_tool_name is provided, the command will reference that MCP tool.
+
+  Otherwise, creates a standalone command with instructions.'
+module: agent_tools.cursor.create_command
+function: create_command
+parameters:
+- name: name
+  type: string
+  description: Command name in kebab-case (e.g., 'my-command')
+  required: true
+- name: description
+  type: string
+  description: What the command does
+  required: true
+- name: mcp_tool_name
+  type: string
+  description: MCP tool name to wrap (e.g., 'git.commit'). If provided, command references
+    this tool.
+  required: false
+- name: parameters
+  type: string
+  description: 'JSON array of parameter definitions: [{name, description, required}].
+    Optional.'
+  required: false

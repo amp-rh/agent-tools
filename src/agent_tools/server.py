@@ -46,6 +46,52 @@ If not and this task is repeatable, I'll create one with `registry-add` first.
 
 Every repeatable process becomes a tool. My job is to think. Tools do the work."""
 
+MCP_FROM_COMMANDS_PROMPT = """\
+## Extract MCP Tools from Cursor Commands
+
+Scan commands in `.cursor/commands/` or `~/.cursor/commands/` and extract those that \
+aren't yet MCP tools.
+
+### Identification
+
+Commands that are NOT yet MCP tools have detailed instructions instead of:
+```
+Use the `namespace.tool` MCP tool.
+```
+
+### Extraction Workflow (per command)
+
+1. **Analyze**: Read command file, understand what it does
+2. **Design**: Determine namespace, tool name, parameters
+3. **Create**: `registry.add(name, description, parameters)`
+4. **Test**: Write tests FIRST (TDD) in `tests/test_<namespace>/`
+5. **Implement**: Code the tool in generated stub
+6. **Verify**: `uv run pytest tests/test_<namespace>/test_<tool>.py`
+7. **Lint**: `uv run ruff check --fix`
+8. **Update command**: Change to "Use the `namespace.tool` MCP tool."
+9. **Sync**: Copy to `~/.cursor/commands/`
+
+### Namespace Guidelines
+
+| Domain | Namespace | Examples |
+|--------|-----------|----------|
+| Git operations | `git` | commit, update-prs |
+| Cursor IDE | `cursor` | create-command, sync-commands |
+| MCP operations | `mcp` | inspect, connect |
+| Agent notes | `notes` | todo |
+| Code operations | `code` | lint, refactor |
+
+### Common Patterns
+
+- **CLI tools**: Use `subprocess.run()` with `capture_output=True, text=True`
+- **File operations**: Use `Path.cwd()` / `Path.home()`, mock in tests
+- **Config files**: Parse with `json.loads()`, handle errors gracefully
+- **Output**: Return structured markdown with `## Headers`
+
+### After All Extractions
+
+Update `.cursor/discovery/mcp-from-commands.md` with status."""
+
 
 @dataclass(frozen=True)
 class ServerConfig:
@@ -154,7 +200,11 @@ class AgentToolsServer:
             Prompt(
                 name="agent-tools-workflow",
                 description="Agent's thought process: check tools first, create if needed",
-            )
+            ),
+            Prompt(
+                name="mcp-from-commands",
+                description="Workflow for extracting MCP tools from Cursor command files",
+            ),
         ]
 
     async def _get_prompt(
@@ -167,6 +217,16 @@ class AgentToolsServer:
                     PromptMessage(
                         role="assistant",
                         content=TextContent(type="text", text=WORKFLOW_PROMPT),
+                    )
+                ],
+            )
+        if name == "mcp-from-commands":
+            return GetPromptResult(
+                description="Workflow for extracting MCP tools from Cursor commands",
+                messages=[
+                    PromptMessage(
+                        role="assistant",
+                        content=TextContent(type="text", text=MCP_FROM_COMMANDS_PROMPT),
                     )
                 ],
             )
