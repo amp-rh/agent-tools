@@ -27,11 +27,6 @@ ONE_OFF_SIGNALS = [
 CORE_NAMESPACES = {"registry", "agent"}
 
 
-def _load_registry() -> dict[str, Any]:
-    """Load the registry from the configured tool_defs directory."""
-    return _core.load_registry()
-
-
 def _is_tier1(name: str, config: dict[str, Any]) -> bool:
     """Determine if a tool is Tier 1 (directly callable)."""
     if "tier" in config:
@@ -107,7 +102,7 @@ def begin(task: str) -> str:
     Returns:
         Analysis and recommendation.
     """
-    registry = _load_registry()
+    registry = _core.load_registry()
     tools = registry.get("tools", [])
     tools_output = _format_tools_by_tier(tools)
     repeatability, reason = analyze_repeatability(task)

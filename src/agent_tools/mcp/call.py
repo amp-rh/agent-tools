@@ -55,7 +55,7 @@ def call_external_sync(server: str, tool: str, **kwargs) -> str:
     result = [None]
     error = [None]
 
-    def thread_target():
+    def _execute_in_loop():
         try:
             new_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(new_loop)
@@ -68,7 +68,7 @@ def call_external_sync(server: str, tool: str, **kwargs) -> str:
         except Exception as e:
             error[0] = e
 
-    thread = threading.Thread(target=thread_target)
+    thread = threading.Thread(target=_execute_in_loop)
     thread.start()
     thread.join(timeout=120)
 
