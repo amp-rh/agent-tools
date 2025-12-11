@@ -14,9 +14,11 @@ def reload() -> str:
     without restarting the MCP server.
 
     Returns:
-        Summary of modules cleared and tools reloaded.
+        Summary of modules cleared and configs reloaded.
     """
-    # Find all agent_tools modules to clear (except core infrastructure)
+    lines = ["## Cache Cleared", ""]
+
+    # === 1. Clear Python module cache for local tools ===
     preserve = {
         "agent_tools",
         "agent_tools._core",
@@ -30,28 +32,35 @@ def reload() -> str:
         if name.startswith("agent_tools") and name not in preserve
     ]
 
-    # Clear the modules
     for name in to_clear:
         del sys.modules[name]
 
-    # Also clear any cached bytecode by touching __pycache__ would be overkill
-    # The import system will re-import fresh on next tool call
-
-    lines = [
-        "## Module Cache Cleared",
-        "",
-        f"Cleared {len(to_clear)} modules from cache.",
-        "",
-    ]
-
+    lines.append(f"**Local tools**: Cleared {len(to_clear)} Python modules.")
     if to_clear:
-        lines.append("Modules cleared:")
-        for name in sorted(to_clear)[:10]:  # Show first 10
-            lines.append(f"  - {name}")
-        if len(to_clear) > 10:
-            lines.append(f"  - ... and {len(to_clear) - 10} more")
-        lines.append("")
+        sample = sorted(to_clear)[:5]
+        lines.append(f"  Examples: {', '.join(m.split('.')[-1] for m in sample)}")
+    lines.append("")
 
-    lines.append("Next tool calls will use fresh code from disk.")
+    # === 2. Reload external MCP server configs ===
+    external_status = _reload_external_configs()
+    lines.append(f"**External servers**: {external_status}")
+    lines.append("")
+
+    lines.append("Next tool calls will use fresh code/configs.")
+    lines.append("")
+    lines.append("**Note**: External MCP server code changes require `mcp.disconnect` + `mcp.connect`.")
 
     return "\n".join(lines)
+
+
+def _reload_external_configs() -> str:
+    """Reload external MCP server configurations from disk."""
+    try:
+        from agent_tools.mcp.connect import get_manager
+        manager = get_manager()
+        manager.reload_configs()
+        servers = manager.get_configured_servers()
+        return f"Reloaded configs ({len(servers)} servers configured)"
+    except Exception:
+        # No manager available (running outside MCP server context)
+        return "No active manager (standalone mode)"

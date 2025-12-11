@@ -11,8 +11,9 @@ class TestReload:
         """Verify reload returns a summary message."""
         result = reload()
 
-        assert "Module Cache Cleared" in result
-        assert "modules from cache" in result
+        assert "Cache Cleared" in result
+        assert "Local tools" in result
+        assert "External servers" in result
 
     def test_reload_clears_tool_modules(self):
         """Verify reload clears agent_tools submodules."""
@@ -35,13 +36,20 @@ class TestReload:
         # Core module should still be present
         assert "agent_tools._core" in sys.modules
 
-    def test_reload_reports_cleared_modules(self):
-        """Verify reload lists what was cleared."""
+    def test_reload_reports_both_local_and_external(self):
+        """Verify reload reports on both local and external."""
         # Import something first
         import agent_tools.agent.begin  # noqa: F401
 
         result = reload()
 
-        # Should mention clearing happened
-        assert "Cleared" in result
+        # Should mention both
+        assert "Local tools" in result
+        assert "External servers" in result
         assert "Next tool calls will use fresh code" in result
+
+    def test_reload_notes_external_reconnect(self):
+        """Verify reload mentions external servers need reconnect for code changes."""
+        result = reload()
+
+        assert "mcp.disconnect" in result or "mcp.connect" in result
