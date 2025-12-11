@@ -29,10 +29,12 @@ __all__ = ["AgentToolsServer", "main"]
 ENTRY_POINT_TOOLS = frozenset({
     "agent.start-here",
     "registry.execute",
+    "registry.list",
     "registry.reload",
     "observe.log",
     "observe.trace-call",
     "observe.session",
+    "think.about",
 })
 
 WORKFLOW_PROMPT = """\
@@ -130,6 +132,7 @@ class AgentToolsServer:
         self._server.get_prompt()(self._get_prompt)
         self._server.list_resources()(self._list_resources)
         self._server.read_resource()(self._read_resource)
+        self._server.list_resource_templates()(self._list_resource_templates)
 
     async def _list_tools(self) -> list[Tool]:
         tools = []
@@ -179,10 +182,14 @@ class AgentToolsServer:
             ),
         ]
 
+    async def _list_resource_templates(self) -> list:
+        """Return empty list - we don't have resource templates."""
+        return []
+
     async def _read_resource(self, uri: str) -> list[TextResourceContents]:
         import yaml
 
-        if uri == "agent-tools://registry":
+        if str(uri) == "agent-tools://registry":
             # Build registry summary
             namespaces: dict[str, list[dict[str, str]]] = {}
             for name, tool in self._tools.items():
