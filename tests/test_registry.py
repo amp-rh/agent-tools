@@ -297,7 +297,7 @@ class TestCommandGenerator:
         generator = CommandGenerator(tmp_path)
         content = generator.generate_command(tool)
 
-        assert "# Example" in content
+        assert "# Test Example" in content
         assert "A test tool for testing things." in content
         assert "`test.example`" in content
         assert "## Parameters" in content
@@ -340,8 +340,8 @@ class TestCommandGenerator:
         path = generator.generate_one(tool)
 
         assert path.exists()
-        assert path.name == "my-tool.md"
-        assert "# My Tool" in path.read_text()
+        assert path.name == "test-my-tool.md"
+        assert "# Test My Tool" in path.read_text()
 
     def test_generate_all_creates_multiple_files(self, tmp_path: Path):
         """Verify generate_all creates files for all tools."""
@@ -356,8 +356,8 @@ class TestCommandGenerator:
         paths = generator.generate_all(tools)
 
         assert len(paths) == 2
-        assert (tmp_path / "tool1.md").exists()
-        assert (tmp_path / "tool2.md").exists()
+        assert (tmp_path / "ns-tool1.md").exists()
+        assert (tmp_path / "ns-tool2.md").exists()
 
     def test_sync_removes_stale_files(self, tmp_path: Path):
         """Verify sync removes files not in tool list."""
@@ -376,21 +376,21 @@ class TestCommandGenerator:
 
         assert not stale_file.exists()
         assert len(result["removed"]) == 1
-        assert (tmp_path / "current.md").exists()
+        assert (tmp_path / "ns-current.md").exists()
 
     def test_format_title_handles_special_cases(self, tmp_path: Path):
         """Verify title formatting handles edge cases."""
         generator = CommandGenerator(tmp_path)
 
-        # Test PRs special case
+        # Test PRs special case (now includes namespace)
         tool = ToolDefinition(name="github.my-prs", description="",
                               module="m", function="f", parameters=[])
-        assert generator._format_title(tool) == "My PRs"
+        assert generator._format_title(tool) == "Github My PRs"
 
-        # Test simple case
+        # Test simple case (now includes namespace)
         tool2 = ToolDefinition(name="code.lint", description="",
                                module="m", function="f", parameters=[])
-        assert generator._format_title(tool2) == "Lint"
+        assert generator._format_title(tool2) == "Code Lint"
 
 
 class TestGenerateCommands:
@@ -404,7 +404,7 @@ class TestGenerateCommands:
         result = generate_commands(output_dir)
 
         assert "Generated" in result
-        assert (output_dir / "cmd.md").exists()
+        assert (output_dir / "test-cmd.md").exists()
 
     def test_generate_commands_with_sync(self, tmp_registry: Path):
         """Verify generate_commands syncs properly."""
@@ -418,4 +418,4 @@ class TestGenerateCommands:
 
         assert "Removed" in result
         assert not (output_dir / "stale.md").exists()
-        assert (output_dir / "keep.md").exists()
+        assert (output_dir / "test-keep.md").exists()

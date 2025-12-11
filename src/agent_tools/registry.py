@@ -117,10 +117,10 @@ class CommandGenerator:
 
     def _format_title(self, tool: ToolDefinition) -> str:
         """Convert tool name to human-readable title."""
-        # Convert 'my-prs' to 'My PRs', 'lint' to 'Lint'
+        # Convert 'think.about' to 'Think About', 'github.my-prs' to 'Github My PRs'
         # Special acronyms that should be styled specifically
         acronyms = {"prs": "PRs", "api": "API", "url": "URL", "id": "ID"}
-        words = tool.tool_name.replace("-", " ").split()
+        words = tool.name.replace(".", "-").replace("-", " ").split()
         return " ".join(acronyms.get(word.lower(), word.capitalize()) for word in words)
 
     def _format_parameters(self, tool: ToolDefinition) -> str:
@@ -142,7 +142,8 @@ class CommandGenerator:
         # Generate example based on first required parameter or first optional
         required_params = [p for p in tool.parameters if p.required]
         if required_params:
-            return f'\n\nExample: "Run {tool.tool_name.replace("-", " ")} with {required_params[0].name}"'
+            command_name = tool.name.replace(".", "-").replace("-", " ")
+            return f'\n\nExample: "Run {command_name} with {required_params[0].name}"'
         return ""
 
     def generate_command(self, tool: ToolDefinition) -> str:
@@ -159,7 +160,7 @@ class CommandGenerator:
         """Generate command file for a single tool."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
         content = self.generate_command(tool)
-        command_file = self.output_dir / f"{tool.tool_name}.md"
+        command_file = self.output_dir / f"{tool.name.replace('.', '-')}.md"
         command_file.write_text(content)
         return command_file
 
@@ -177,7 +178,7 @@ class CommandGenerator:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Track expected files
-        expected_files = {f"{tool.tool_name}.md" for tool in tools}
+        expected_files = {f"{tool.name.replace('.', '-')}.md" for tool in tools}
 
         # Generate all commands
         created = self.generate_all(tools)
