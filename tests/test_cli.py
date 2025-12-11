@@ -171,7 +171,7 @@ class TestCmdCommands:
         assert result == 0
         captured = capsys.readouterr()
         assert "Generated" in captured.out
-        assert (output_dir / "cmd-tool.md").exists()
+        assert (output_dir / "test-cmd-tool.md").exists()
 
     def test_commands_with_sync(
         self,
@@ -197,7 +197,7 @@ class TestCmdCommands:
         captured = capsys.readouterr()
         assert "Removed" in captured.out
         assert not (output_dir / "stale.md").exists()
-        assert (output_dir / "keep.md").exists()
+        assert (output_dir / "test-keep.md").exists()
 
     def test_commands_fails_without_registry(
         self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch
