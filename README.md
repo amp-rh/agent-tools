@@ -71,8 +71,8 @@ tool_defs/
 
 src/agent_tools/
 ├── _core.py               # Dataclasses: ToolParameter, ToolDefinition, ToolRegistry
-├── registry.py            # StubGenerator, ToolManager, ValidationResult
-├── server.py              # AgentToolsServer (MCP server)
+├── registry/              # Registry tools (add, remove, reload, etc.)
+├── server.py              # AgentToolsServer (MCP server with tools, prompts, resources)
 └── mytools/
     └── my_tool.py         # Your implementation
 ```
@@ -123,11 +123,12 @@ def greet(name: str) -> str:
 
 | Namespace | Tools | Purpose |
 |-----------|-------|---------|
-| `registry` | add, remove, update, list, validate, execute | Manage the tool registry |
-| `agent` | start-here, begin | Workflow guidance for agents |
+| `registry` | add, remove, update, list, validate, execute, reload | Manage the tool registry |
+| `agent` | start-here, begin, extract | Workflow guidance for agents |
 | `mcp` | add, connect, disconnect, list, remove | Manage external MCP servers |
 | `code` | lint, refactor | Code quality tools |
 | `docs` | write-findings | Documentation generation |
+| `observe` | log, session, trace-call | Tracing and observability |
 | `think` | about | Structured thinking |
 
 ## External MCP Servers
@@ -153,7 +154,7 @@ git clone https://github.com/amp-rh/agent-tools.git
 cd agent-tools
 
 uv sync           # Install dependencies
-uv run pytest     # Run tests (79 tests)
+uv run pytest     # Run tests (158 tests)
 uv run ruff check # Lint
 ```
 

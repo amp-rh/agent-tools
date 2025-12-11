@@ -74,8 +74,8 @@ Write descriptions as if they're the only documentation. Include:
 | File | Purpose |
 |------|---------|
 | `tool_defs/` | Tool definitions (YAML, single source of truth) |
-| `src/agent_tools/registry.py` | Meta-tool implementation |
-| `src/agent_tools/server.py` | MCP server |
+| `src/agent_tools/registry/` | Registry tools (add, remove, reload, etc.) |
+| `src/agent_tools/server.py` | MCP server (tools, prompts, resources) |
 | `src/agent_tools/_template.py` | Stub template reference |
 
 ## Registry Tools
@@ -87,6 +87,8 @@ Write descriptions as if they're the only documentation. Include:
 | `registry.update` | Update existing tool definition |
 | `registry.list` | List all tools (hierarchical YAML) |
 | `registry.validate` | Check for errors in registry |
+| `registry.execute` | Execute any tool by name |
+| `registry.reload` | Clear module cache (hot-reload tools) |
 
 ## Namespace Convention
 
