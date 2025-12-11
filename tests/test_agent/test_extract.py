@@ -9,7 +9,7 @@ class TestExtract:
         """Verify extract returns structured prompts."""
         result = extract("Created a script to format JSON files")
 
-        assert "Extract Tool from Conversation" in result
+        assert "Extract Reusable Pattern" in result
         assert "Created a script to format JSON files" in result
 
     def test_extract_includes_all_sections(self):
@@ -17,9 +17,9 @@ class TestExtract:
         result = extract("Automated report generation")
 
         assert "What's Repeatable?" in result
-        assert "Tool Specification" in result
+        assert "Option A: Create a Tool" in result
+        assert "Option B: Create an MCP Prompt" in result
         assert "Registry Command" in result
-        assert "Implementation Notes" in result
 
     def test_extract_shows_registry_add_format(self):
         """Verify extract shows registry.add command format."""
@@ -52,3 +52,13 @@ class TestExtract:
 
         assert "inputs vary" in result.lower()
         assert "parameters" in result.lower()
+
+    def test_extract_explains_tool_vs_prompt_vs_resource(self):
+        """Verify extract helps decide between tool, prompt, and resource."""
+        result = extract("Created a reusable workflow")
+
+        assert "Tool, Prompt, or Resource?" in result
+        assert "code execution" in result.lower()
+        assert "guides thinking" in result.lower()
+        assert "exposes data" in result.lower()
+        assert "Option C: Create an MCP Resource" in result

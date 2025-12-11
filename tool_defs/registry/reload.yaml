@@ -1,0 +1,10 @@
+name: registry.reload
+description: 'Clear caches and reload tool definitions.
+
+  For local tools: clears Python module cache so next call uses fresh code.
+
+  For external MCP servers: reloads configs from disk. Note: external server
+  code changes require mcp.disconnect + mcp.connect to take effect.'
+module: agent_tools.registry.reload
+function: reload
+parameters: []

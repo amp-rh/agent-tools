@@ -1,14 +1,14 @@
 name: agent.extract
-description: 'Extract potential tools from conversation patterns.
+description: 'Extract reusable patterns as tools, prompts, or resources.
 
   Use this after completing a task to identify reusable patterns. Returns structured
-  prompts that guide you through:
+  guidance that helps you:
 
-  - Identifying what''s repeatable
+  - Identify what''s repeatable
 
-  - Specifying the tool (name, params, description)
+  - Decide: tool (code), prompt (guidance), or resource (data)
 
-  - Generating a ready-to-use registry.add command
+  - Generate the appropriate definition
 
   Call this when you notice yourself doing something that could be automated or
   reused.'

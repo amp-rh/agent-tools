@@ -26,7 +26,7 @@ def extract(summary: str, context: str = "") -> str:
 
 """
 
-    return f"""## Extract Tool from Conversation
+    return f"""## Extract Reusable Pattern
 
 **Summary**: {summary}
 {context_section}
@@ -39,11 +39,20 @@ Answer these questions about the pattern:
 - What specific action was performed?
 - Would you or another agent do this again?
 - What inputs vary each time? (these become parameters)
-- What stays the same? (this is the tool's logic)
+- What stays the same? (this is the logic)
 
-### 2. Tool Specification
+### 2. Tool, Prompt, or Resource?
 
-Fill in this template:
+| **Tool** | **Prompt** | **Resource** |
+|----------|------------|--------------|
+| Needs code execution | Guides thinking/workflow | Exposes data for reading |
+| Has variable inputs | Static text, no params | Static or computed data |
+| Returns computed results | Reusable starting point | Reference information |
+| Example: `code.refactor` | Example: `agent-tools-workflow` | Example: `agent-tools://registry` |
+
+---
+
+## Option A: Create a Tool
 
 **Name**: `namespace.tool-name`
 - Use existing namespace if it fits: agent, code, docs, think, github, mcp
@@ -58,10 +67,7 @@ Fill in this template:
 | param1 | string | yes | What this parameter is for |
 | param2 | string | no | Optional parameter |
 
-### 3. Registry Command
-
-Once you've filled in the specification, use this format:
-
+**Registry Command**:
 ```
 registry-execute(
   name="registry.add",
@@ -69,15 +75,70 @@ registry-execute(
 )
 ```
 
-### 4. Implementation Notes
-
-After creating the tool stub:
-
-1. The stub will be at `src/agent_tools/<namespace>/<tool_name>.py`
-2. Implement the function body (replace `raise NotImplementedError`)
-3. Run tests: `uv run pytest tests/test_<namespace>/test_<tool_name>.py`
-4. Restart MCP server to use the new tool
+After creating:
+1. Implement stub at `src/agent_tools/<namespace>/<tool_name>.py`
+2. Run tests: `uv run pytest tests/test_<namespace>/test_<tool_name>.py`
+3. Restart MCP server
 
 ---
-*Extract what's reusable. Keep it simple. One tool = one job.*
+
+## Option B: Create an MCP Prompt
+
+MCP prompts are reusable text templates that guide agent behavior without code.
+
+**To add a prompt**, edit `src/agent_tools/server.py`:
+
+1. Add to `_list_prompts()`:
+```python
+Prompt(
+    name="your-prompt-name",
+    description="When to use this prompt",
+)
+```
+
+2. Add to `_get_prompt()`:
+```python
+if name == "your-prompt-name":
+    return GetPromptResult(
+        description="...",
+        messages=[
+            PromptMessage(
+                role="assistant",  # or "user"
+                content=TextContent(type="text", text=YOUR_PROMPT_TEXT),
+            )
+        ],
+    )
+```
+
+**Note**: Prompts are only used when explicitly requested by the client. They don't auto-inject.
+
+---
+
+## Option C: Create an MCP Resource
+
+MCP resources expose data that agents can read. Use for reference data, configs, or computed summaries.
+
+**To add a resource**, edit `src/agent_tools/server.py`:
+
+1. Add to `_list_resources()`:
+```python
+Resource(
+    uri="agent-tools://your-resource",
+    name="Your Resource Name",
+    description="What this resource contains",
+    mimeType="text/yaml",  # or text/plain, application/json
+)
+```
+
+2. Add to `_read_resource()`:
+```python
+if uri == "agent-tools://your-resource":
+    content = "your content here"
+    return [TextResourceContents(uri=uri, mimeType="text/yaml", text=content)]
+```
+
+**Note**: Resources are read-only data. Use tools for actions, prompts for guidance, resources for data.
+
+---
+*Extract what's reusable. Tool = code. Prompt = guidance. Resource = data.*
 """

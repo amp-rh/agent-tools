@@ -10,7 +10,15 @@ from typing import Any
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import GetPromptResult, Prompt, PromptMessage, TextContent, Tool
+from mcp.types import (
+    GetPromptResult,
+    Prompt,
+    PromptMessage,
+    Resource,
+    TextContent,
+    TextResourceContents,
+    Tool,
+)
 
 import agent_tools._core as _core
 from agent_tools._core import ToolDefinition, ToolParameter, ToolRegistry
@@ -21,9 +29,12 @@ __all__ = ["AgentToolsServer", "main"]
 ENTRY_POINT_TOOLS = frozenset({
     "agent.start-here",
     "registry.execute",
+    "registry.list",
+    "registry.reload",
     "observe.log",
     "observe.trace-call",
     "observe.session",
+    "think.about",
 })
 
 WORKFLOW_PROMPT = """\
@@ -119,6 +130,9 @@ class AgentToolsServer:
         self._server.call_tool()(self._call_tool)
         self._server.list_prompts()(self._list_prompts)
         self._server.get_prompt()(self._get_prompt)
+        self._server.list_resources()(self._list_resources)
+        self._server.read_resource()(self._read_resource)
+        self._server.list_resource_templates()(self._list_resource_templates)
 
     async def _list_tools(self) -> list[Tool]:
         tools = []
@@ -157,6 +171,38 @@ class AgentToolsServer:
                 ],
             )
         raise ValueError(f"Unknown prompt: {name}")
+
+    async def _list_resources(self) -> list[Resource]:
+        return [
+            Resource(
+                uri="agent-tools://registry",
+                name="Tool Registry",
+                description="All available tools organized by namespace",
+                mimeType="text/yaml",
+            ),
+        ]
+
+    async def _list_resource_templates(self) -> list:
+        """Return empty list - we don't have resource templates."""
+        return []
+
+    async def _read_resource(self, uri: str) -> list[TextResourceContents]:
+        import yaml
+
+        if str(uri) == "agent-tools://registry":
+            # Build registry summary
+            namespaces: dict[str, list[dict[str, str]]] = {}
+            for name, tool in self._tools.items():
+                ns = tool.namespace
+                namespaces.setdefault(ns, []).append({
+                    "name": tool.tool_name,
+                    "description": tool.short_description,
+                })
+
+            content = yaml.dump(namespaces, default_flow_style=False, sort_keys=True)
+            return [TextResourceContents(uri=uri, mimeType="text/yaml", text=content)]
+
+        raise ValueError(f"Unknown resource: {uri}")
 
     def _find_tool(self, mcp_name: str) -> ToolDefinition | None:
         registry_name = ToolNameConverter.to_registry(mcp_name)
