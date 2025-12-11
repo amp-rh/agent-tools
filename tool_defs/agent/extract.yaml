@@ -1,0 +1,25 @@
+name: agent.extract
+description: 'Extract potential tools from conversation patterns.
+
+  Use this after completing a task to identify reusable patterns. Returns structured
+  prompts that guide you through:
+
+  - Identifying what''s repeatable
+
+  - Specifying the tool (name, params, description)
+
+  - Generating a ready-to-use registry.add command
+
+  Call this when you notice yourself doing something that could be automated or
+  reused.'
+module: agent_tools.agent.extract
+function: extract
+parameters:
+- name: summary
+  type: string
+  description: What was accomplished in the conversation
+  required: true
+- name: context
+  type: string
+  description: Optional code snippets, patterns, or examples from the conversation
+  required: false

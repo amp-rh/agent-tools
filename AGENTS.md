@@ -2,11 +2,21 @@
 
 **Core principle**: Every repeatable process becomes a tool. Your job is to think. Tools do the work.
 
-## Before Doing Anything
+## Project Structure
 
-Ask: *"Will I or another agent ever do this again?"*
-- **Yes** → Create a tool first, then use it
-- **No** → Do it manually (rare)
+This project uses **focused contexts** to keep agent context windows small and relevant. Each directory has its own `AGENTS.md` that serves as an entry point.
+
+| Context | Description | Key Files |
+|---------|-------------|-----------|
+| @.cursor/discovery | Research and findings (local-only) | Analysis, patterns discovered |
+| @.cursor/remediation | Fixes and improvements (local-only) | Action items, implementation guides |
+| @.cursor/inventory | Data and tracking (local-only) | CSVs, structured data |
+| @.cursor/resources | Reference materials (local-only) | External docs, guides |
+| @docs | Existing documentation | discovery-problem.md |
+
+> **Note**: The `.cursor/` directories are gitignored and local-only. They persist across chat sessions but are not committed to the repository.
+
+---
 
 ## Quick Start
 
@@ -15,9 +25,15 @@ uv sync              # Install dependencies
 uv run pytest        # Run tests
 ```
 
+## Before Doing Anything
+
+Ask: *"Will I or another agent ever do this again?"*
+- **Yes** → Create a tool first, then use it
+- **No** → Do it manually (rare)
+
 ## How It Works
 
-1. Tools are defined in `agent-tools.yaml`
+1. Tools are defined in `tool_defs/` (YAML files)
 2. MCP server exposes them as callable functions
 3. Use `registry.*` tools to add/modify tools
 4. New tools available after MCP restart
@@ -35,7 +51,7 @@ registry.add(
 ```
 
 This creates:
-- YAML entry in `agent-tools.yaml`
+- YAML entry in `tool_defs/namespace/tool-name.yaml`
 - Module stub at `src/agent_tools/namespace/tool_name.py`
 - Test stub at `tests/test_namespace/test_tool_name.py`
 
@@ -45,7 +61,7 @@ Then: implement the function, run tests, restart MCP.
 
 **Tool descriptions ARE the interface.** Agents only know what descriptions tell them.
 
-**But descriptions don't guarantee behavior.** Even "ALWAYS call this first" won't trigger if the agent is task-focused. See [docs/discovery-problem.md](docs/discovery-problem.md) for the full analysis.
+**But descriptions don't guarantee behavior.** Even "ALWAYS call this first" won't trigger if the agent is task-focused. See @docs/discovery-problem.md for the full analysis.
 
 Write descriptions as if they're the only documentation. Include:
 - What the tool does
@@ -57,7 +73,7 @@ Write descriptions as if they're the only documentation. Include:
 
 | File | Purpose |
 |------|---------|
-| `agent-tools.yaml` | Tool registry (single source of truth) |
+| `tool_defs/` | Tool definitions (YAML, single source of truth) |
 | `src/agent_tools/registry.py` | Meta-tool implementation |
 | `src/agent_tools/server.py` | MCP server |
 | `src/agent_tools/_template.py` | Stub template reference |
@@ -97,3 +113,27 @@ Restart MCP
     ↓
 Use tool
 ```
+
+---
+
+## Agent Notes
+
+### 🔴 CRITICAL: Always Update Inventory Files
+
+**Every chat session starts fresh.** When you discover new findings or verify existing ones, you MUST update the inventory files immediately. This is the source of truth for the project.
+
+**When you find something new or verify/refute existing findings:**
+
+1. **Update `.cursor/inventory/*.csv`** - Add/modify data entries
+2. **Update `.cursor/discovery/*.md`** - Update findings and status
+3. **Update this file (`AGENTS.md`)** - Update summary counts and lists
+
+**Never assume the user will ask you to update files** - do it automatically as part of completing the task.
+
+### Quick Links
+
+- **Discovery details**: @.cursor/discovery/AGENTS.md
+- **Remediation guide**: @.cursor/remediation/AGENTS.md
+- **Inventory data**: @.cursor/inventory/AGENTS.md
+- **Reference materials**: @.cursor/resources/AGENTS.md
+- **Analysis docs**: @docs/discovery-problem.md

@@ -1,0 +1,23 @@
+name: observe.session
+description: "Capture a session checkpoint with current state. Use at key decision\
+  \ points to create restore points for analysis or debugging. Saves checkpoint to\
+  \ a JSON file in the specified directory.\n\nSuggested checkpoints:\n- 'session_start'\
+  \ - Initial context and goals\n- 'before_complex_op' - State before risky operations\
+  \  \n- 'decision_point' - When choosing between approaches\n- 'error_recovery' -\
+  \ After handling an error\n- 'session_end' - Final state summary\n\nReturns: {\"\
+  checkpoint\": \"name\", \"file\": \"path\", \"timestamp\": \"iso8601\"}"
+module: agent_tools.observe.session
+function: session
+parameters:
+- name: checkpoint_dir
+  type: string
+  description: Directory to save checkpoint files
+  required: true
+- name: checkpoint_name
+  type: string
+  description: Name for this checkpoint (used in filename)
+  required: true
+- name: state
+  type: object
+  description: Current state to capture (goals, progress, decisions, etc.)
+  required: true

@@ -7,12 +7,15 @@ from pathlib import Path
 import yaml
 
 from agent_tools.registry import (
+    CommandGenerator,
     add_tool,
+    generate_commands,
     list_tools,
     remove_tool,
     update_tool,
     validate_registry,
 )
+from agent_tools._core import ToolDefinition, ToolParameter
 
 
 class TestAddTool:
@@ -276,3 +279,143 @@ class TestExecuteTool:
 
         assert "Error" in result
         assert "JSON" in result
+
+
+class TestCommandGenerator:
+    """Tests for CommandGenerator functionality."""
+
+    def test_generate_command_basic(self, tmp_path: Path):
+        """Verify CommandGenerator produces valid markdown."""
+        tool = ToolDefinition(
+            name="test.example",
+            description="A test tool for testing things.",
+            module="agent_tools.test.example",
+            function="example",
+            parameters=[],
+        )
+
+        generator = CommandGenerator(tmp_path)
+        content = generator.generate_command(tool)
+
+        assert "# Test Example" in content
+        assert "A test tool for testing things." in content
+        assert "`test.example`" in content
+        assert "## Parameters" in content
+        assert "None" in content
+
+    def test_generate_command_with_parameters(self, tmp_path: Path):
+        """Verify CommandGenerator formats parameters correctly."""
+        tool = ToolDefinition(
+            name="code.lint",
+            description="Lint code files.",
+            module="agent_tools.code.lint",
+            function="lint",
+            parameters=[
+                ToolParameter(name="path", type="string",
+                              description="File to lint", required=True),
+                ToolParameter(name="fix", type="boolean",
+                              description="Auto-fix issues", required=False),
+            ],
+        )
+
+        generator = CommandGenerator(tmp_path)
+        content = generator.generate_command(tool)
+
+        assert "**path** (required)" in content
+        assert "File to lint" in content
+        assert "**fix** (optional)" in content
+        assert "Auto-fix issues" in content
+
+    def test_generate_one_creates_file(self, tmp_path: Path):
+        """Verify generate_one creates markdown file."""
+        tool = ToolDefinition(
+            name="test.my-tool",
+            description="My tool",
+            module="agent_tools.test.my_tool",
+            function="my_tool",
+            parameters=[],
+        )
+
+        generator = CommandGenerator(tmp_path)
+        path = generator.generate_one(tool)
+
+        assert path.exists()
+        assert path.name == "test-my-tool.md"
+        assert "# Test My Tool" in path.read_text()
+
+    def test_generate_all_creates_multiple_files(self, tmp_path: Path):
+        """Verify generate_all creates files for all tools."""
+        tools = [
+            ToolDefinition(name="ns.tool1", description="Tool 1",
+                           module="m", function="f", parameters=[]),
+            ToolDefinition(name="ns.tool2", description="Tool 2",
+                           module="m", function="f", parameters=[]),
+        ]
+
+        generator = CommandGenerator(tmp_path)
+        paths = generator.generate_all(tools)
+
+        assert len(paths) == 2
+        assert (tmp_path / "ns-tool1.md").exists()
+        assert (tmp_path / "ns-tool2.md").exists()
+
+    def test_sync_removes_stale_files(self, tmp_path: Path):
+        """Verify sync removes files not in tool list."""
+        # Create a stale file
+        stale_file = tmp_path / "stale.md"
+        stale_file.parent.mkdir(parents=True, exist_ok=True)
+        stale_file.write_text("# Stale")
+
+        tools = [
+            ToolDefinition(name="ns.current", description="Current",
+                           module="m", function="f", parameters=[]),
+        ]
+
+        generator = CommandGenerator(tmp_path)
+        result = generator.sync(tools)
+
+        assert not stale_file.exists()
+        assert len(result["removed"]) == 1
+        assert (tmp_path / "ns-current.md").exists()
+
+    def test_format_title_handles_special_cases(self, tmp_path: Path):
+        """Verify title formatting handles edge cases."""
+        generator = CommandGenerator(tmp_path)
+
+        # Test PRs special case (now includes namespace)
+        tool = ToolDefinition(name="github.my-prs", description="",
+                              module="m", function="f", parameters=[])
+        assert generator._format_title(tool) == "Github My PRs"
+
+        # Test simple case (now includes namespace)
+        tool2 = ToolDefinition(name="code.lint", description="",
+                               module="m", function="f", parameters=[])
+        assert generator._format_title(tool2) == "Code Lint"
+
+
+class TestGenerateCommands:
+    """Tests for generate_commands function."""
+
+    def test_generate_commands_creates_files(self, tmp_registry: Path):
+        """Verify generate_commands creates command files from registry."""
+        add_tool(name="test.cmd", description="Test command", parameters="[]")
+
+        output_dir = tmp_registry / ".cursor" / "commands"
+        result = generate_commands(output_dir)
+
+        assert "Generated" in result
+        assert (output_dir / "test-cmd.md").exists()
+
+    def test_generate_commands_with_sync(self, tmp_registry: Path):
+        """Verify generate_commands syncs properly."""
+        add_tool(name="test.keep", description="Keep this", parameters="[]")
+
+        output_dir = tmp_registry / ".cursor" / "commands"
+        output_dir.mkdir(parents=True)
+        (output_dir / "stale.md").write_text("# Stale")
+
+        result = generate_commands(output_dir, sync=True)
+
+        assert "Removed" in result
+        assert not (output_dir / "stale.md").exists()
+        assert (output_dir / "test-keep.md").exists()

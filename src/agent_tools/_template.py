@@ -49,3 +49,17 @@ INIT_TEMPLATE = '''\
 """{namespace} tools."""
 from __future__ import annotations
 '''
+
+COMMAND_TEMPLATE = '''\
+# {title}
+
+{description}
+
+## Parameters
+
+{parameters}
+
+## Usage
+
+Use the `{tool_name}` MCP tool.{example}
+'''

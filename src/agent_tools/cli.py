@@ -6,6 +6,7 @@ Commands:
     server   - Run the MCP server
     list     - List all registered tools
     validate - Check registry for errors
+    commands - Generate Cursor slash commands
 """
 from __future__ import annotations
 
@@ -163,6 +164,30 @@ def cmd_validate(args: list[str]) -> int:
     return _with_registry(validate_registry)
 
 
+def cmd_commands(args: list[str]) -> int:
+    """Generate Cursor slash commands from tool definitions."""
+    from agent_tools.registry import generate_commands
+
+    # Parse arguments
+    output_dir = None
+    sync = "--sync" in args
+
+    for i, arg in enumerate(args):
+        if arg == "--output" and i + 1 < len(args):
+            output_dir = Path(args[i + 1])
+        elif arg.startswith("--output="):
+            output_dir = Path(arg.split("=", 1)[1])
+
+    # Default to .cursor/commands in current directory
+    if output_dir is None:
+        output_dir = Path.cwd() / ".cursor" / "commands"
+
+    def _generate():
+        return generate_commands(output_dir, sync=sync)
+
+    return _with_registry(_generate)
+
+
 def cmd_help(args: list[str]) -> int:
     """Show help message."""
     print("""agent-tools - A self-modifying tool registry that lets AI agents create
@@ -175,6 +200,7 @@ Commands:
     server     Run the MCP server (or use: agent-tools-server)
     list       List all registered tools
     validate   Check registry for errors
+    commands   Generate Cursor slash commands from tools
     help       Show this help message
 
 What It Does:
@@ -211,6 +237,7 @@ COMMANDS = {
     "server": cmd_server,
     "list": cmd_list,
     "validate": cmd_validate,
+    "commands": cmd_commands,
     "help": cmd_help,
     "--help": cmd_help,
     "-h": cmd_help,

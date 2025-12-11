@@ -1,0 +1,39 @@
+name: observe.trace-call
+description: 'Record a tool call with timing information. Call this BEFORE and AFTER
+  executing a tool to capture duration. First call with phase=''start'' returns a
+  trace_id. Second call with phase=''end'' and the same trace_id completes the trace.
+
+
+  Usage pattern:
+
+  1. trace = observe.trace-call(file, tool_name, params, phase=''start'')
+
+  2. [execute the actual tool]
+
+  3. observe.trace-call(file, tool_name, result, phase=''end'', trace_id=trace.id)
+
+
+  Returns: {"trace_id": "uuid", "phase": "start|end", "duration_ms": N (end only)}'
+module: agent_tools.observe.trace_call
+function: trace_call
+parameters:
+- name: file
+  type: string
+  description: Path to the trace log file
+  required: true
+- name: tool_name
+  type: string
+  description: Name of the tool being traced
+  required: true
+- name: phase
+  type: string
+  description: Either 'start' or 'end'
+  required: true
+- name: data
+  type: object
+  description: Parameters (for start) or result summary (for end)
+  required: false
+- name: trace_id
+  type: string
+  description: Required for phase='end' - the trace_id from the start call
+  required: false

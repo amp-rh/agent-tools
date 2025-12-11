@@ -1,0 +1,27 @@
+name: observe.log
+description: 'Append a structured observation entry to a trace log file. Use this
+  to record significant events, decisions, or state changes during a session. Each
+  entry includes timestamp, category, message, and optional metadata. The log is append-only
+  and newline-delimited JSON for easy parsing.
+
+
+  Returns: {"logged": true, "file": "path", "entry_count": N}'
+module: agent_tools.observe.log
+function: log
+parameters:
+- name: file
+  type: string
+  description: Path to the trace log file (created if missing)
+  required: true
+- name: category
+  type: string
+  description: Event category (e.g., 'decision', 'tool_call', 'error', 'checkpoint')
+  required: true
+- name: message
+  type: string
+  description: Human-readable description of the event
+  required: true
+- name: metadata
+  type: object
+  description: Optional structured data to include with the entry
+  required: false
