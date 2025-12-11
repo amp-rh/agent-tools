@@ -144,8 +144,70 @@ class TestCmdHelp:
 
         assert result == 0
         captured = capsys.readouterr()
-        for cmd in ["init", "server", "list", "validate"]:
+        for cmd in ["init", "server", "list", "validate", "commands"]:
             assert cmd in captured.out
+
+
+class TestCmdCommands:
+    """Tests for the commands command."""
+
+    def test_commands_generates_files(
+        self,
+        tmp_registry: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        """Verify commands generates Cursor command files."""
+        from agent_tools.registry import add_tool
+
+        add_tool(name="test.cmd-tool", description="A test tool", parameters="[]")
+
+        # Point CLI to the temp registry's tool_defs
+        monkeypatch.setattr(cli, "find_registry", lambda: tmp_registry / "tool_defs")
+
+        output_dir = tmp_registry / ".cursor" / "commands"
+        result = cli.cmd_commands(["--output", str(output_dir)])
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Generated" in captured.out
+        assert (output_dir / "cmd-tool.md").exists()
+
+    def test_commands_with_sync(
+        self,
+        tmp_registry: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        """Verify commands --sync removes stale files."""
+        from agent_tools.registry import add_tool
+
+        add_tool(name="test.keep", description="Keep this", parameters="[]")
+
+        # Create a stale command file
+        output_dir = tmp_registry / ".cursor" / "commands"
+        output_dir.mkdir(parents=True)
+        (output_dir / "stale.md").write_text("# Stale")
+
+        monkeypatch.setattr(cli, "find_registry", lambda: tmp_registry / "tool_defs")
+
+        result = cli.cmd_commands(["--output", str(output_dir), "--sync"])
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Removed" in captured.out
+        assert not (output_dir / "stale.md").exists()
+        assert (output_dir / "keep.md").exists()
+
+    def test_commands_fails_without_registry(
+        self, tmp_cwd: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Verify commands fails when no registry found."""
+        monkeypatch.setattr(cli, "find_registry", lambda: None)
+
+        result = cli.cmd_commands([])
+
+        assert result == 1
 
 
 class TestCmdServer:
