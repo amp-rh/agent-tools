@@ -18,7 +18,13 @@ from agent_tools.mcp_client import ExternalServerManager
 
 __all__ = ["AgentToolsServer", "main"]
 
-ENTRY_POINT_TOOLS = frozenset({"agent.start-here", "registry.execute"})
+ENTRY_POINT_TOOLS = frozenset({
+    "agent.start-here",
+    "registry.execute",
+    "observe.log",
+    "observe.trace-call",
+    "observe.session",
+})
 
 WORKFLOW_PROMPT = """\
 I should check what tools are available before attempting this task.
