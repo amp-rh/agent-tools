@@ -1,0 +1,30 @@
+name: git.commit
+description: 'Commit changes to git with a conventional commit message.
+
+
+  Stages files (all if not specified) and commits with the format: <type>(<scope>):
+  <message>
+
+
+  The agent should analyze changes and provide an appropriate message - this tool
+  executes the commit.'
+module: agent_tools.git.commit
+function: commit
+parameters:
+- name: message
+  type: string
+  description: The commit message description (required)
+  required: true
+- name: type
+  type: string
+  description: 'Commit type: feat, fix, refactor, docs, test, chore (default: feat)'
+  required: false
+- name: scope
+  type: string
+  description: Scope for conventional commit (e.g., registry, server, docs)
+  required: false
+- name: files
+  type: string
+  description: 'Specific files to stage (space or comma separated). Default: all changes
+    (-A)'
+  required: false

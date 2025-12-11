@@ -37,11 +37,14 @@ parameters: []
         assert "Available Tools" in result
 
     def test_begin_detects_repeatable_task(self, tmp_registry):
-        """Verify begin identifies repeatable tasks."""
+        """Verify begin identifies repeatable tasks and mentions MCP primitives."""
         result = begin("create a test file for the module")
 
         assert "repeatable" in result.lower()
-        assert "registry-add" in result
+        # Should mention all three MCP primitives, not just tools
+        assert "Tool" in result
+        assert "Prompt" in result
+        assert "Resource" in result
 
     def test_begin_detects_one_off_task(self, tmp_registry):
         """Verify begin identifies one-off tasks."""
