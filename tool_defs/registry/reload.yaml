@@ -1,0 +1,6 @@
+name: registry.reload
+description: Clear Python module cache and reload tool definitions. Use after modifying
+  tool implementations to pick up changes without restarting the MCP server.
+module: agent_tools.registry.reload
+function: reload
+parameters: []

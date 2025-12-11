@@ -29,6 +29,7 @@ __all__ = ["AgentToolsServer", "main"]
 ENTRY_POINT_TOOLS = frozenset({
     "agent.start-here",
     "registry.execute",
+    "registry.reload",
     "observe.log",
     "observe.trace-call",
     "observe.session",
