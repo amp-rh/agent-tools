@@ -71,10 +71,13 @@ tool_defs/
 
 src/agent_tools/
 ├── _core.py               # Dataclasses: ToolParameter, ToolDefinition, ToolRegistry
-├── registry/              # Registry tools (add, remove, reload, etc.)
+├── cli.py                 # CLI entry point
 ├── server.py              # AgentToolsServer (MCP server with tools, prompts, resources)
+├── registry/              # Registry tools (add, remove, reload, etc.)
+├── agent/                 # Agent workflow tools
+├── mcp/                   # External MCP server management
 └── mytools/
-    └── my_tool.py         # Your implementation
+    └── my_tool.py         # Your custom implementations
 ```
 
 ### Key Classes
@@ -125,9 +128,13 @@ def greet(name: str) -> str:
 |-----------|-------|---------|
 | `registry` | add, remove, update, list, validate, execute, reload | Manage the tool registry |
 | `agent` | start-here, begin, extract | Workflow guidance for agents |
-| `mcp` | add, connect, disconnect, list, remove | Manage external MCP servers |
+| `mcp` | add, connect, disconnect, inspect, list, remove | Manage external MCP servers |
 | `code` | lint, refactor | Code quality tools |
+| `cursor` | create-command, sync-commands | Cursor IDE integration |
 | `docs` | write-findings | Documentation generation |
+| `git` | commit, update-prs | Git operations |
+| `github` | my-prs | GitHub integration |
+| `notes` | todo | Agent note-taking |
 | `observe` | log, session, trace-call | Tracing and observability |
 | `think` | about | Structured thinking |
 
@@ -154,7 +161,7 @@ git clone https://github.com/amp-rh/agent-tools.git
 cd agent-tools
 
 uv sync           # Install dependencies
-uv run pytest     # Run tests (158 tests)
+uv run pytest     # Run tests (194 tests)
 uv run ruff check # Lint
 ```
 
