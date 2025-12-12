@@ -92,6 +92,431 @@ Use the `namespace.tool` MCP tool.
 
 Update `.cursor/discovery/mcp-from-commands.md` with status."""
 
+REFACTOR_FUNCTION_PROMPT = """\
+## Refactor Function Workflow
+
+Step-by-step guide for refactoring a specific function to improve quality.
+
+### 1. Analyze the Function
+
+Run `code.complexity` on the file to get metrics:
+- Cyclomatic complexity (target: <= 5)
+- Lines of code (target: <= 20)
+- Nesting depth (target: <= 3)
+- Parameter count (target: <= 4)
+
+### 2. Identify Issues
+
+Common problems to look for:
+- **Too long**: Extract smaller functions with clear names
+- **Too complex**: Simplify conditionals, use early returns
+- **Too many params**: Use parameter objects or builder pattern
+- **Deep nesting**: Use guard clauses to flatten
+
+### 3. Apply Refactoring Patterns
+
+| Issue | Pattern | Example |
+|-------|---------|---------|
+| Long function | Extract Method | Move code blocks to named functions |
+| Complex conditionals | Replace Conditional with Polymorphism | Use strategy pattern |
+| Deep nesting | Guard Clauses | Return early for edge cases |
+| Many parameters | Parameter Object | Group related params into a class |
+| Duplicate code | Extract and Share | Create utility function |
+
+### 4. Verify Changes
+
+After refactoring:
+1. Run tests to ensure behavior unchanged
+2. Run `code.complexity` again to verify improvement
+3. Run `code.lint` to fix any style issues
+
+### 5. Document
+
+Add/update docstrings explaining:
+- What the function does
+- Parameters and return value
+- Any important behavior"""
+
+EXTRACT_RESPONSIBILITY_PROMPT = """\
+## Extract Responsibility Workflow
+
+Apply Single Responsibility Principle (SRP) by extracting mixed responsibilities.
+
+### 1. Identify Mixed Responsibilities
+
+Signs a class/module has too many responsibilities:
+- Multiple unrelated public methods
+- Methods that don't use the same instance variables
+- "And" in the class description (e.g., "parses AND validates AND saves")
+- Large file size (> 300 lines often indicates multiple concerns)
+
+### 2. Group Related Functionality
+
+For each responsibility:
+1. List the methods that belong together
+2. Identify shared state they use
+3. Name the responsibility clearly
+
+### 3. Plan the Extraction
+
+Create a plan with:
+- New module/class name (noun describing the responsibility)
+- Methods to move
+- State to move
+- Interface between old and new code
+
+### 4. Execute Extraction
+
+Step by step:
+1. Create new module/class with the extracted methods
+2. Update imports in the original module
+3. Replace direct calls with delegation or dependency injection
+4. Run tests after each change
+
+### 5. Verify with Architecture Analysis
+
+Run `code.architecture` to check:
+- No circular dependencies introduced
+- Proper layer boundaries maintained
+- Dependency direction is correct (outer depends on inner)
+
+### Example
+
+Before:
+```python
+class UserService:
+    def create_user(self, data): ...      # Business logic
+    def validate_email(self, email): ...  # Validation
+    def send_welcome_email(self, user): ...  # Email sending
+    def save_to_database(self, user): ...    # Persistence
+```
+
+After:
+```python
+class UserService:           # Just business logic
+class EmailValidator:        # Validation concern
+class EmailSender:          # Email concern
+class UserRepository:       # Persistence concern
+```"""
+
+CLEAN_ARCHITECTURE_REVIEW_PROMPT = """\
+## Clean Architecture Review Checklist
+
+Use this checklist to verify a codebase follows clean architecture principles.
+
+### Layer Structure
+
+Verify the codebase has clear layers:
+
+- [ ] **Domain/Entities**: Core business objects and rules
+  - No framework dependencies
+  - No database/external service dependencies
+  - Pure Python classes
+
+- [ ] **Application/Use Cases**: Business operations
+  - Orchestrates domain objects
+  - Defines interfaces for external dependencies
+  - No direct infrastructure imports
+
+- [ ] **Interface/Adapters**: Controllers, presenters, gateways
+  - Implements interfaces defined in application layer
+  - Converts between external and internal formats
+
+- [ ] **Infrastructure**: Frameworks, DB, external services
+  - Implements interfaces from inner layers
+  - Contains all framework-specific code
+
+### Dependency Direction
+
+Run `code.architecture` and verify:
+
+- [ ] No circular dependencies
+- [ ] Domain layer has NO imports from other layers
+- [ ] Application layer only imports from domain
+- [ ] Infrastructure imports from all inner layers (allowed)
+
+### Interface Segregation
+
+- [ ] Interfaces are small and focused
+- [ ] Clients don't depend on methods they don't use
+- [ ] Abstract base classes define clear contracts
+
+### Dependency Inversion
+
+- [ ] High-level modules don't import low-level modules
+- [ ] Both depend on abstractions (interfaces)
+- [ ] Abstractions live in inner layers
+
+### Common Violations
+
+| Violation | Fix |
+|-----------|-----|
+| Domain imports database | Create repository interface |
+| Use case calls HTTP directly | Inject HTTP client interface |
+| Controller has business logic | Move to use case |
+| Entity depends on framework | Create pure domain model |
+
+### After Review
+
+Document findings in `.cursor/discovery/architecture-review.md`:
+- Current state assessment
+- Violations found
+- Remediation plan with priority"""
+
+CLEAN_CODE_RESOURCE = """\
+# Clean Code Principles Reference
+
+## SOLID Principles
+
+### Single Responsibility (SRP)
+A class should have only one reason to change.
+- One class = one responsibility
+- If you can't describe it without "and", split it
+
+### Open/Closed (OCP)
+Open for extension, closed for modification.
+- Use inheritance or composition for new behavior
+- Don't modify existing working code
+
+### Liskov Substitution (LSP)
+Subtypes must be substitutable for their base types.
+- Override methods should honor base contract
+- Don't throw unexpected exceptions
+
+### Interface Segregation (ISP)
+Many specific interfaces > one general interface.
+- Clients shouldn't depend on unused methods
+- Split large interfaces into focused ones
+
+### Dependency Inversion (DIP)
+Depend on abstractions, not concretions.
+- High-level modules don't import low-level
+- Both depend on interfaces
+
+## Function Design
+
+### Size
+- Keep functions small (< 20 lines ideal)
+- Do one thing well
+- One level of abstraction per function
+
+### Naming
+- Use descriptive names
+- Verb for actions: `calculate_total`, `send_email`
+- Noun for getters: `get_user`, `find_orders`
+
+### Parameters
+- Fewer is better (0-2 ideal, 3 max)
+- Use parameter objects for many params
+- Avoid boolean flags (split into two functions)
+
+### Return Values
+- Return early for edge cases
+- Single return type (don't mix None/value)
+- Use exceptions for errors, not return codes
+
+## Naming Conventions
+
+### Variables
+- Descriptive and pronounceable
+- Avoid abbreviations except common ones (id, url)
+- Scope-appropriate length (loop: i, class: user_repository)
+
+### Functions
+- Verb + noun: `validate_email`, `create_order`
+- Question for booleans: `is_valid`, `has_permission`
+
+### Classes
+- Noun or noun phrase: `UserService`, `OrderProcessor`
+- Avoid generic names: Manager, Processor, Data, Info
+
+## Complexity Guidelines
+
+| Metric | Target | Warning | Critical |
+|--------|--------|---------|----------|
+| Cyclomatic complexity | <= 5 | 6-10 | > 10 |
+| Function lines | <= 20 | 21-40 | > 40 |
+| Nesting depth | <= 3 | 4 | > 4 |
+| Parameters | <= 3 | 4-5 | > 5 |
+| Class methods | <= 10 | 11-20 | > 20 |"""
+
+REFACTORING_PATTERNS_RESOURCE = """\
+# Common Refactoring Patterns
+
+## Extract Method
+**When**: Long function or duplicate code blocks
+**How**: Move code to a new function with descriptive name
+
+Before:
+```python
+def process_order(order):
+    # validate
+    if not order.items:
+        raise ValueError("Empty order")
+    if order.total < 0:
+        raise ValueError("Invalid total")
+    # process
+    for item in order.items:
+        inventory.reserve(item)
+    payment.charge(order.total)
+```
+
+After:
+```python
+def process_order(order):
+    validate_order(order)
+    reserve_inventory(order)
+    charge_payment(order)
+```
+
+## Replace Conditional with Polymorphism
+**When**: Switch/if-else on type to determine behavior
+**How**: Create subclasses or strategy objects
+
+Before:
+```python
+def calculate_shipping(order):
+    if order.type == "standard":
+        return order.weight * 1.0
+    elif order.type == "express":
+        return order.weight * 2.5
+    elif order.type == "overnight":
+        return order.weight * 5.0
+```
+
+After:
+```python
+class ShippingStrategy:
+    def calculate(self, order): ...
+
+class StandardShipping(ShippingStrategy):
+    def calculate(self, order):
+        return order.weight * 1.0
+```
+
+## Introduce Parameter Object
+**When**: Multiple parameters that travel together
+**How**: Create a class to hold related parameters
+
+Before:
+```python
+def create_user(name, email, street, city, zip_code, country):
+    ...
+```
+
+After:
+```python
+@dataclass
+class Address:
+    street: str
+    city: str
+    zip_code: str
+    country: str
+
+def create_user(name, email, address: Address):
+    ...
+```
+
+## Replace Magic Numbers with Constants
+**When**: Literal values with unclear meaning
+**How**: Extract to named constants
+
+Before:
+```python
+if user.age >= 18:
+    if user.orders > 10:
+        discount = 0.15
+```
+
+After:
+```python
+LEGAL_AGE = 18
+LOYAL_CUSTOMER_ORDERS = 10
+LOYAL_CUSTOMER_DISCOUNT = 0.15
+
+if user.age >= LEGAL_AGE:
+    if user.orders > LOYAL_CUSTOMER_ORDERS:
+        discount = LOYAL_CUSTOMER_DISCOUNT
+```
+
+## Guard Clauses (Replace Nested Conditionals)
+**When**: Deep nesting from multiple conditions
+**How**: Return early for edge cases
+
+Before:
+```python
+def get_payment(order):
+    if order:
+        if order.is_paid:
+            if order.payment:
+                return order.payment
+            else:
+                return None
+        else:
+            return None
+    else:
+        return None
+```
+
+After:
+```python
+def get_payment(order):
+    if not order:
+        return None
+    if not order.is_paid:
+        return None
+    return order.payment
+```
+
+## Decompose Conditional
+**When**: Complex boolean expressions
+**How**: Extract conditions to named functions/variables
+
+Before:
+```python
+if (user.subscription == "premium" and
+    user.orders > 5 and
+    user.account_age > 365 and
+    not user.has_violations):
+    apply_discount()
+```
+
+After:
+```python
+def is_eligible_for_loyalty_discount(user):
+    return (
+        user.subscription == "premium" and
+        user.orders > 5 and
+        user.account_age > 365 and
+        not user.has_violations
+    )
+
+if is_eligible_for_loyalty_discount(user):
+    apply_discount()
+```
+
+## Replace Temp with Query
+**When**: Temporary variable used once after calculation
+**How**: Extract calculation to a method
+
+Before:
+```python
+base_price = quantity * item_price
+if base_price > 1000:
+    return base_price * 0.95
+return base_price
+```
+
+After:
+```python
+def base_price(self):
+    return self.quantity * self.item_price
+
+if self.base_price() > 1000:
+    return self.base_price() * 0.95
+return self.base_price()
+```"""
+
 
 @dataclass(frozen=True)
 class ServerConfig:
@@ -205,28 +630,54 @@ class AgentToolsServer:
                 name="mcp-from-commands",
                 description="Workflow for extracting MCP tools from Cursor command files",
             ),
+            Prompt(
+                name="refactor-function",
+                description="Step-by-step guide for refactoring a function",
+            ),
+            Prompt(
+                name="extract-responsibility",
+                description="Workflow for applying Single Responsibility Principle",
+            ),
+            Prompt(
+                name="clean-architecture-review",
+                description="Checklist for reviewing clean architecture compliance",
+            ),
         ]
 
     async def _get_prompt(
         self, name: str, arguments: dict[str, str] | None
     ) -> GetPromptResult:
-        if name == "agent-tools-workflow":
+        prompts = {
+            "agent-tools-workflow": (
+                "Agent's thought process: check tools first, create if needed",
+                WORKFLOW_PROMPT,
+            ),
+            "mcp-from-commands": (
+                "Workflow for extracting MCP tools from Cursor commands",
+                MCP_FROM_COMMANDS_PROMPT,
+            ),
+            "refactor-function": (
+                "Step-by-step guide for refactoring a function",
+                REFACTOR_FUNCTION_PROMPT,
+            ),
+            "extract-responsibility": (
+                "Workflow for applying Single Responsibility Principle",
+                EXTRACT_RESPONSIBILITY_PROMPT,
+            ),
+            "clean-architecture-review": (
+                "Checklist for reviewing clean architecture compliance",
+                CLEAN_ARCHITECTURE_REVIEW_PROMPT,
+            ),
+        }
+
+        if name in prompts:
+            description, text = prompts[name]
             return GetPromptResult(
-                description="Agent's thought process: check tools first, create if needed",
+                description=description,
                 messages=[
                     PromptMessage(
                         role="assistant",
-                        content=TextContent(type="text", text=WORKFLOW_PROMPT),
-                    )
-                ],
-            )
-        if name == "mcp-from-commands":
-            return GetPromptResult(
-                description="Workflow for extracting MCP tools from Cursor commands",
-                messages=[
-                    PromptMessage(
-                        role="assistant",
-                        content=TextContent(type="text", text=MCP_FROM_COMMANDS_PROMPT),
+                        content=TextContent(type="text", text=text),
                     )
                 ],
             )
@@ -240,6 +691,18 @@ class AgentToolsServer:
                 description="All available tools organized by namespace",
                 mimeType="text/yaml",
             ),
+            Resource(
+                uri="agent-tools://clean-code",
+                name="Clean Code Principles",
+                description="SOLID principles, function design, naming conventions",
+                mimeType="text/markdown",
+            ),
+            Resource(
+                uri="agent-tools://refactoring-patterns",
+                name="Refactoring Patterns",
+                description="Common refactoring patterns with examples",
+                mimeType="text/markdown",
+            ),
         ]
 
     async def _list_resource_templates(self) -> list:
@@ -249,7 +712,9 @@ class AgentToolsServer:
     async def _read_resource(self, uri: str) -> list[TextResourceContents]:
         import yaml
 
-        if str(uri) == "agent-tools://registry":
+        uri_str = str(uri)
+
+        if uri_str == "agent-tools://registry":
             # Build registry summary
             namespaces: dict[str, list[dict[str, str]]] = {}
             for name, tool in self._tools.items():
@@ -261,6 +726,20 @@ class AgentToolsServer:
 
             content = yaml.dump(namespaces, default_flow_style=False, sort_keys=True)
             return [TextResourceContents(uri=uri, mimeType="text/yaml", text=content)]
+
+        if uri_str == "agent-tools://clean-code":
+            return [
+                TextResourceContents(
+                    uri=uri, mimeType="text/markdown", text=CLEAN_CODE_RESOURCE
+                )
+            ]
+
+        if uri_str == "agent-tools://refactoring-patterns":
+            return [
+                TextResourceContents(
+                    uri=uri, mimeType="text/markdown", text=REFACTORING_PATTERNS_RESOURCE
+                )
+            ]
 
         raise ValueError(f"Unknown resource: {uri}")
 

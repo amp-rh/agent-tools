@@ -1,0 +1,21 @@
+name: code.architecture
+description: 'Analyze code architecture and dependency structure.
+
+  Use this to detect architectural issues like circular dependencies and layer violations.
+  Helps ensure clean architecture principles are followed.
+
+  Analyzes:
+  - Import graph and module dependencies
+  - Circular dependency detection
+  - Layer violations (e.g., domain depending on infrastructure)
+  - Dependency direction issues
+
+  Returns a dependency report with specific recommendations.'
+module: agent_tools.code.architecture
+function: architecture
+parameters:
+- name: path
+  type: string
+  description: Directory or file to analyze
+  required: true
+

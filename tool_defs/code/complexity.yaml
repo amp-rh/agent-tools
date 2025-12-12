@@ -1,0 +1,25 @@
+name: code.complexity
+description: 'Analyze code complexity metrics for Python files.
+
+  Use this to identify functions that are too complex, too long, deeply nested,
+  or have too many parameters. Helps prioritize refactoring efforts.
+
+  Metrics analyzed:
+  - Cyclomatic complexity (branches, loops, conditionals)
+  - Function length (lines of code)
+  - Nesting depth
+  - Parameter count
+
+  Returns functions ranked by complexity with specific recommendations.'
+module: agent_tools.code.complexity
+function: complexity
+parameters:
+- name: path
+  type: string
+  description: Directory or file to analyze
+  required: true
+- name: threshold
+  type: integer
+  description: 'Minimum complexity score to include in results (default: 1)'
+  required: false
+

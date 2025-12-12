@@ -30,10 +30,13 @@ class TestPrompts:
         """Verify list_prompts includes all prompts."""
         prompts = await server._list_prompts()
 
-        assert len(prompts) == 2
+        assert len(prompts) == 5
         names = [p.name for p in prompts]
         assert "agent-tools-workflow" in names
         assert "mcp-from-commands" in names
+        assert "refactor-function" in names
+        assert "extract-responsibility" in names
+        assert "clean-architecture-review" in names
 
     @pytest.mark.asyncio
     async def test_get_prompt_returns_workflow_content(self, server: AgentToolsServer):
@@ -81,13 +84,14 @@ class TestResources:
 
     @pytest.mark.asyncio
     async def test_list_resources_returns_registry(self, server: AgentToolsServer):
-        """Verify list_resources includes the registry resource."""
+        """Verify list_resources includes all resources."""
         resources = await server._list_resources()
 
-        assert len(resources) == 1
-        assert str(resources[0].uri) == "agent-tools://registry"
-        assert resources[0].name == "Tool Registry"
-        assert resources[0].mimeType == "text/yaml"
+        assert len(resources) == 3
+        uris = [str(r.uri) for r in resources]
+        assert "agent-tools://registry" in uris
+        assert "agent-tools://clean-code" in uris
+        assert "agent-tools://refactoring-patterns" in uris
 
     @pytest.mark.asyncio
     async def test_read_resource_registry(self, server: AgentToolsServer):
