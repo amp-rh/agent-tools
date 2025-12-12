@@ -2,18 +2,108 @@
 from __future__ import annotations
 
 import subprocess
+from dataclasses import dataclass
 
 __all__ = ["commit"]
 
 
-def commit(message: str, type: str = None, scope: str = None, files: str = None) -> str:
+@dataclass
+class CommitResult:
+    """Result of a git commit operation."""
+
+    success: bool
+    message: str
+    commit_hash: str = ""
+    stdout: str = ""
+
+
+def _build_commit_message(message: str, commit_type: str, scope: str | None) -> str:
+    """Build a conventional commit message."""
+    if scope:
+        return f"{commit_type}({scope}): {message}"
+    return f"{commit_type}: {message}"
+
+
+def _parse_file_list(files: str | None) -> list[str]:
+    """Parse a comma or space separated file list."""
+    if not files:
+        return []
+    return [f.strip() for f in files.replace(",", " ").split() if f.strip()]
+
+
+def _stage_files(files: str | None) -> tuple[bool, str]:
+    """Stage files for commit.
+
+    Returns:
+        Tuple of (success, error_message)
     """
-    Commit changes to git with a conventional commit message.
+    file_list = _parse_file_list(files)
+
+    if file_list:
+        cmd = ["git", "add", "--"] + file_list
+    else:
+        cmd = ["git", "add", "-A"]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        stderr = result.stderr.strip()
+        if stderr:
+            return False, f"Error staging files: {stderr}"
+        return False, f"Error staging files (exit code {result.returncode})"
+
+    return True, ""
+
+
+def _execute_commit(full_message: str) -> CommitResult:
+    """Execute the git commit command."""
+    result = subprocess.run(
+        ["git", "commit", "-m", full_message],
+        capture_output=True,
+        text=True,
+    )
+
+    stdout = result.stdout.strip()
+    stderr = result.stderr.strip()
+
+    if result.returncode != 0:
+        combined = f"{stdout} {stderr}".lower()
+        if "nothing to commit" in combined or "no changes" in combined:
+            return CommitResult(False, "Nothing to commit - working tree clean")
+        if "not a git repository" in combined:
+            return CommitResult(False, "Error: Not a git repository")
+        return CommitResult(False, f"Error: {stderr or stdout or 'Unknown git error'}")
+
+    commit_hash = _extract_commit_hash(stdout)
+    return CommitResult(True, full_message, commit_hash, stdout)
+
+
+def _extract_commit_hash(stdout: str) -> str:
+    """Extract commit hash from git output like '[main abc1234] message'."""
+    if not stdout or "]" not in stdout:
+        return ""
+
+    bracket_content = stdout.split("]")[0]
+    parts = bracket_content.strip("[").split()
+    if len(parts) >= 2:
+        return parts[-1]
+    return ""
+
+
+def _format_success_output(result: CommitResult) -> str:
+    """Format successful commit output."""
+    lines = ["## Committed", ""]
+    lines.append(f"**Message**: `{result.message}`")
+    if result.commit_hash:
+        lines.append(f"**Hash**: `{result.commit_hash}`")
+    lines.extend(["", "```", result.stdout, "```"])
+    return "\n".join(lines)
+
+
+def commit(message: str, type: str = None, scope: str = None, files: str = None) -> str:
+    """Commit changes to git with a conventional commit message.
 
     Stages files (all if not specified) and commits with format: <type>(<scope>): <message>
-
-    The agent should analyze changes and provide an appropriate message.
-    This tool executes the commit.
 
     Args:
         message: The commit message description (required)
@@ -25,71 +115,16 @@ def commit(message: str, type: str = None, scope: str = None, files: str = None)
         Result message describing what was done.
     """
     commit_type = type or "feat"
-
-    # Build conventional commit message
-    if scope:
-        full_message = f"{commit_type}({scope}): {message}"
-    else:
-        full_message = f"{commit_type}: {message}"
+    full_message = _build_commit_message(message, commit_type, scope)
 
     # Stage files
-    if files:
-        # Parse files (comma or space separated)
-        file_list = [f.strip() for f in files.replace(",", " ").split() if f.strip()]
-        stage_cmd = ["git", "add", "--"] + file_list
-    else:
-        stage_cmd = ["git", "add", "-A"]
+    success, error = _stage_files(files)
+    if not success:
+        return error
 
-    stage_result = subprocess.run(
-        stage_cmd,
-        capture_output=True,
-        text=True,
-    )
+    # Execute commit
+    result = _execute_commit(full_message)
+    if not result.success:
+        return result.message
 
-    if stage_result.returncode != 0:
-        stderr = stage_result.stderr.strip()
-        if stderr:
-            return f"Error staging files: {stderr}"
-        return f"Error staging files (exit code {stage_result.returncode})"
-
-    # Commit
-    commit_cmd = ["git", "commit", "-m", full_message]
-    commit_result = subprocess.run(
-        commit_cmd,
-        capture_output=True,
-        text=True,
-    )
-
-    stdout = commit_result.stdout.strip()
-    stderr = commit_result.stderr.strip()
-
-    if commit_result.returncode != 0:
-        # Check for "nothing to commit"
-        combined = f"{stdout} {stderr}".lower()
-        if "nothing to commit" in combined or "no changes" in combined:
-            return "Nothing to commit - working tree clean"
-        if "not a git repository" in combined:
-            return "Error: Not a git repository"
-        return f"Error: {stderr or stdout or 'Unknown git error'}"
-
-    # Extract commit hash from output like "[main abc1234] message"
-    commit_hash = ""
-    if stdout:
-        # Parse "[branch hash] message" format
-        if "]" in stdout:
-            bracket_content = stdout.split("]")[0]
-            parts = bracket_content.strip("[").split()
-            if len(parts) >= 2:
-                commit_hash = parts[-1]
-
-    lines = ["## Committed"]
-    lines.append("")
-    lines.append(f"**Message**: `{full_message}`")
-    if commit_hash:
-        lines.append(f"**Hash**: `{commit_hash}`")
-    lines.append("")
-    lines.append("```")
-    lines.append(stdout)
-    lines.append("```")
-
-    return "\n".join(lines)
+    return _format_success_output(result)
