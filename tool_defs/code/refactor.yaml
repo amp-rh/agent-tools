@@ -1,23 +1,18 @@
 name: code.refactor
-description: 'Analyze code for refactoring opportunities and generate a refactoring
-  plan.
+description: 'Comprehensive refactoring analysis chain.
 
+  Use this when asked to refactor, clean up, or improve code quality.
 
-  Use this when asked to refactor, clean up, or reduce duplication in code.
+  Chains multiple analyzers:
+  - Duplication: Duplicate functions, same-name functions
+  - Complexity: Cyclomatic complexity, function length, nesting depth
+  - Architecture: Circular dependencies, layer violations
 
-
-  Analyzes the target path for:
-
-  - Duplicate functions/logic across files
-
-  - Code that should be extracted into shared utilities
-
-  - Overly complex functions that should be split
-
-  - Dead code that can be removed
-
-
-  Returns a structured refactoring plan with specific file changes.'
+  Returns a prioritized refactoring plan with:
+  - Priority 1: Critical issues (high complexity, circular deps)
+  - Priority 2: Major issues (duplication, layer violations)
+  - Priority 3: Minor issues (naming, moderate complexity)
+  - Recommended actions ordered by impact'
 module: agent_tools.code.refactor
 function: refactor
 parameters:
@@ -27,6 +22,5 @@ parameters:
   required: true
 - name: focus
   type: string
-  description: 'Specific focus area: ''duplication'', ''complexity'', ''dead-code'',
-    or ''all'''
+  description: 'Focus area: ''duplication'', ''complexity'', ''architecture'', or ''all'''
   required: false

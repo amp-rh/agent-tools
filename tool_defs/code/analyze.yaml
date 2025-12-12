@@ -1,0 +1,25 @@
+name: code.analyze
+description: 'Comprehensive code quality analysis combining multiple analyzers.
+
+  Use this for a complete code review covering complexity, architecture, and naming.
+  Orchestrates specialized tools and produces a unified report.
+
+  Focus areas:
+  - complexity: Function complexity, length, nesting, parameters
+  - architecture: Dependencies, circular references, layer violations
+  - naming: Naming conventions and readability
+  - all: Run all analyzers (default)
+
+  Returns a comprehensive report with prioritized recommendations.'
+module: agent_tools.code.analyze
+function: analyze
+parameters:
+- name: path
+  type: string
+  description: Directory or file to analyze
+  required: true
+- name: focus
+  type: string
+  description: 'Focus area: complexity, architecture, naming, or all (default: all)'
+  required: false
+

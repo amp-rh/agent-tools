@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 __all__ = ["session"]
@@ -23,7 +23,7 @@ def session(checkpoint_dir: str, checkpoint_name: str, state: str) -> str:
     dir_path = Path(checkpoint_dir)
     dir_path.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now(timezone.utc)
+    timestamp = datetime.now(UTC)
     safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in checkpoint_name)
     filename = f"{timestamp.strftime('%Y%m%d_%H%M%S')}_{safe_name}.json"
     file_path = dir_path / filename

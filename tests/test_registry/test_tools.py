@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from agent_tools._core import ToolDefinition, ToolParameter
 from agent_tools.registry import (
     CommandGenerator,
     add_tool,
@@ -15,7 +16,6 @@ from agent_tools.registry import (
     update_tool,
     validate_registry,
 )
-from agent_tools._core import ToolDefinition, ToolParameter
 
 
 class TestAddTool:
