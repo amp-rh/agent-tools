@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from agent_tools.observe.trace_call import trace_call, _active_traces
+from agent_tools.observe.trace_call import _active_traces, trace_call
 
 
 class TestTraceCall:

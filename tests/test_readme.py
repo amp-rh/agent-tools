@@ -26,7 +26,7 @@ class CursorInstallLink:
     config: dict
 
     @classmethod
-    def from_readme(cls, readme_path: Path) -> "CursorInstallLink":
+    def from_readme(cls, readme_path: Path) -> CursorInstallLink:
         """Extract and parse the Cursor install link from README."""
         content = readme_path.read_text()
         match = re.search(r'\]\((https://cursor\.com/[^)]+install-mcp\?[^)]+)\)', content)

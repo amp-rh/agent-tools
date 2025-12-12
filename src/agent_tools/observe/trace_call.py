@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 __all__ = ["trace_call"]
@@ -33,7 +33,7 @@ def trace_call(
     """
     path = Path(file)
     path.parent.mkdir(parents=True, exist_ok=True)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if phase == "start":
         new_trace_id = str(uuid.uuid4())[:8]

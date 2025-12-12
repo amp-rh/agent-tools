@@ -1,8 +1,6 @@
 """agent.start-here: ALWAYS call this first before attempting any task."""
 from __future__ import annotations
 
-from typing import Any
-
 from agent_tools import _core
 
 __all__ = ["start_here"]
