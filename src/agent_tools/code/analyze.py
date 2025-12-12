@@ -6,6 +6,9 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from agent_tools.code._formatters import format_header, format_section
+from agent_tools.code._parsers import collect_py_files, parse_file
+
 __all__ = ["analyze"]
 
 
@@ -23,7 +26,7 @@ class NamingIssue:
 class NamingVisitor(ast.NodeVisitor):
     """AST visitor that checks naming conventions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.issues: list[NamingIssue] = []
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:  # noqa: N802
@@ -41,12 +44,12 @@ class NamingVisitor(ast.NodeVisitor):
         if name.startswith("__") and name.endswith("__"):
             return
 
-        # Check for single-letter names (except common ones like i, j, k, x, y)
+        # Check for single-letter names
         if len(name) == 1 and name not in {"_"}:
             self.issues.append(
                 NamingIssue(
                     name=name,
-                    file="",  # Set by caller
+                    file="",
                     line=node.lineno,
                     issue_type="too_short",
                     suggestion="Use a descriptive name that explains the function's purpose",
@@ -61,22 +64,21 @@ class NamingVisitor(ast.NodeVisitor):
                     file="",
                     line=node.lineno,
                     issue_type="camel_case",
-                    suggestion=f"Use snake_case: {self._to_snake_case(name)}",
+                    suggestion=f"Use snake_case: {_to_snake_case(name)}",
                 )
             )
 
-    def _to_snake_case(self, name: str) -> str:
-        """Convert camelCase to snake_case."""
-        result = re.sub(r"([A-Z])", r"_\1", name)
-        return result.lower().lstrip("_")
+
+def _to_snake_case(name: str) -> str:
+    """Convert camelCase to snake_case."""
+    result = re.sub(r"([A-Z])", r"_\1", name)
+    return result.lower().lstrip("_")
 
 
 def _analyze_naming(file_path: Path) -> list[NamingIssue]:
     """Analyze naming conventions in a Python file."""
-    try:
-        source = file_path.read_text()
-        tree = ast.parse(source)
-    except (SyntaxError, UnicodeDecodeError):
+    tree = parse_file(file_path)
+    if tree is None:
         return []
 
     visitor = NamingVisitor()
@@ -89,15 +91,12 @@ def _analyze_naming(file_path: Path) -> list[NamingIssue]:
 
 
 def _format_naming_report(issues: list[NamingIssue]) -> list[str]:
-    """Format naming issues as markdown."""
+    """Format naming issues as markdown lines."""
     if not issues:
-        return ["No naming convention issues found."]
+        return []
 
     lines = []
-    lines.append("## Naming Convention Issues")
-    lines.append("")
-
-    by_type = {}
+    by_type: dict[str, list[NamingIssue]] = {}
     for issue in issues:
         by_type.setdefault(issue.issue_type, []).append(issue)
 
@@ -127,9 +126,80 @@ def _format_naming_report(issues: list[NamingIssue]) -> list[str]:
     return lines
 
 
+def _run_complexity_analysis(path: str) -> tuple[str, bool, list[str]]:
+    """Run complexity analysis and return (output, has_issues, recommendations)."""
+    from agent_tools.code.complexity import complexity
+
+    result = complexity(path)
+    has_issues = "High Complexity" in result or "Medium Complexity" in result
+
+    lines = []
+    recommendations = []
+
+    if has_issues:
+        for line in result.split("\n"):
+            if line.startswith("# ") or line.startswith("Analyzed "):
+                continue
+            lines.append(line)
+
+        if "High Complexity" in result:
+            recommendations.append(
+                "Break down complex functions using Extract Method refactoring"
+            )
+
+    return "\n".join(lines), has_issues, recommendations
+
+
+def _run_architecture_analysis(path: str) -> tuple[str, bool, list[str]]:
+    """Run architecture analysis and return (output, has_issues, recommendations)."""
+    from agent_tools.code.architecture import architecture
+
+    result = architecture(path)
+    has_issues = "Circular Dependencies" in result or "Layer Violations" in result
+
+    lines = []
+    recommendations = []
+
+    if has_issues:
+        for line in result.split("\n"):
+            if line.startswith("# ") or line.startswith("Analyzed "):
+                continue
+            lines.append(line)
+
+        if "Circular" in result:
+            recommendations.append(
+                "Break circular dependencies by introducing interfaces"
+            )
+        if "Layer Violation" in result:
+            recommendations.append(
+                "Apply dependency inversion to fix layer violations"
+            )
+
+    return "\n".join(lines), has_issues, recommendations
+
+
+def _run_naming_analysis(py_files: list[Path]) -> tuple[list[str], bool, list[str]]:
+    """Run naming analysis and return (output_lines, has_issues, recommendations)."""
+    all_issues: list[NamingIssue] = []
+    for py_file in py_files:
+        all_issues.extend(_analyze_naming(py_file))
+
+    lines = _format_naming_report(all_issues)
+    recommendations = []
+
+    if all_issues:
+        if any(i.issue_type == "too_short" for i in all_issues):
+            recommendations.append("Use descriptive names that explain purpose")
+        if any(i.issue_type == "camel_case" for i in all_issues):
+            recommendations.append(
+                "Follow Python naming conventions (snake_case for functions)"
+            )
+
+    return lines, bool(all_issues), recommendations
+
+
 def analyze(path: str, focus: str = None) -> str:
-    """
-    Comprehensive code quality analysis combining multiple analyzers.
+    """Comprehensive code quality analysis combining multiple analyzers.
 
     Args:
         path: Directory or file to analyze
@@ -144,109 +214,40 @@ def analyze(path: str, focus: str = None) -> str:
     if not target.exists():
         return f"Error: Path not found: {path}"
 
-    # Collect all Python files
-    if target.is_file():
-        py_files = [target] if target.suffix == ".py" else []
-    else:
-        py_files = list(target.rglob("*.py"))
-        py_files = [
-            f for f in py_files
-            if "__pycache__" not in str(f)
-            and not any(p.startswith(".") for p in f.parts)
-        ]
+    py_files = collect_py_files(target)
 
     if not py_files:
         return f"No Python files found in {path}"
 
-    file_count = len(py_files)
-    lines = [
-        f"# Code Analysis: {path}",
-        "",
-        f"Analyzed {file_count} file{'s' if file_count != 1 else ''}.",
-        "",
-    ]
-
+    lines = [format_header("Code Analysis", path, len(py_files))]
     issues_found = False
-    recommendations = []
+    all_recommendations: list[str] = []
 
     # Run complexity analysis
     if focus in ("complexity", "all"):
-        from agent_tools.code.complexity import complexity
-
-        complexity_result = complexity(path)
-
-        # Check if there are actual issues
-        has_complexity_issues = (
-            "High Complexity" in complexity_result
-            or "Medium Complexity" in complexity_result
-        )
-
-        if has_complexity_issues:
+        output, has_issues, recs = _run_complexity_analysis(path)
+        if has_issues:
             issues_found = True
-            lines.append("## Complexity Analysis")
-            lines.append("")
-            # Extract just the issue sections, not the full header
-            for line in complexity_result.split("\n"):
-                if line.startswith("# ") or line.startswith("Analyzed "):
-                    continue
-                lines.append(line)
-            lines.append("")
-
-            if "High Complexity" in complexity_result:
-                recommendations.append(
-                    "Break down complex functions using Extract Method refactoring"
-                )
+            lines.append(format_section("Complexity Analysis", [output]))
+            all_recommendations.extend(recs)
 
     # Run architecture analysis
     if focus in ("architecture", "all"):
-        from agent_tools.code.architecture import architecture
-
-        arch_result = architecture(path)
-
-        # Check if there are actual issues
-        has_arch_issues = (
-            "Circular Dependencies" in arch_result or "Layer Violations" in arch_result
-        )
-
-        if has_arch_issues:
+        output, has_issues, recs = _run_architecture_analysis(path)
+        if has_issues:
             issues_found = True
-            lines.append("## Architecture Analysis")
-            lines.append("")
-            for line in arch_result.split("\n"):
-                if line.startswith("# ") or line.startswith("Analyzed "):
-                    continue
-                lines.append(line)
-            lines.append("")
-
-            if "Circular" in arch_result:
-                recommendations.append(
-                    "Break circular dependencies by introducing interfaces"
-                )
-            if "Layer Violation" in arch_result:
-                recommendations.append(
-                    "Apply dependency inversion to fix layer violations"
-                )
+            lines.append(format_section("Architecture Analysis", [output]))
+            all_recommendations.extend(recs)
 
     # Run naming analysis
     if focus in ("naming", "all"):
-        all_naming_issues: list[NamingIssue] = []
-        for py_file in py_files:
-            all_naming_issues.extend(_analyze_naming(py_file))
-
-        if all_naming_issues:
+        output_lines, has_issues, recs = _run_naming_analysis(py_files)
+        if has_issues:
             issues_found = True
-            lines.extend(_format_naming_report(all_naming_issues))
+            lines.append(format_section("Naming Convention Issues", output_lines))
+            all_recommendations.extend(recs)
 
-            if any(i.issue_type == "too_short" for i in all_naming_issues):
-                recommendations.append(
-                    "Use descriptive names that explain purpose"
-                )
-            if any(i.issue_type == "camel_case" for i in all_naming_issues):
-                recommendations.append(
-                    "Follow Python naming conventions (snake_case for functions)"
-                )
-
-    # Summary and recommendations
+    # Summary
     lines.append("## Summary")
     lines.append("")
 
@@ -255,8 +256,7 @@ def analyze(path: str, focus: str = None) -> str:
     else:
         lines.append("### Recommendations")
         lines.append("")
-        for i, rec in enumerate(recommendations, 1):
+        for i, rec in enumerate(all_recommendations, 1):
             lines.append(f"{i}. {rec}")
 
     return "\n".join(lines)
-

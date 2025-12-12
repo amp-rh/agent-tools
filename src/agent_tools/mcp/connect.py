@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import atexit
 
+from agent_tools._async_helpers import run_async_in_thread
 from agent_tools.mcp_client import ExternalServerManager
 
 __all__ = ["connect", "get_manager", "cleanup"]
@@ -33,7 +34,6 @@ def get_manager() -> ExternalServerManager:
     global _manager, _cleanup_registered
     if _manager is None:
         _manager = ExternalServerManager()
-        # Register cleanup on process exit
         if not _cleanup_registered:
             atexit.register(_cleanup_sync)
             _cleanup_registered = True
@@ -57,20 +57,16 @@ async def cleanup() -> None:
 async def _connect_async(name: str) -> str:
     """Async implementation of connect."""
     manager = get_manager()
-
-    # Reload configs to pick up any newly added servers
     manager.reload_configs()
 
     configured = manager.get_configured_servers()
     if name not in configured:
         return f"Error: Server '{name}' not configured. Use mcp.add first."
 
-    # Try to start the server
     success = await manager.start_server(name)
     if not success:
         return f"Error: Failed to start server '{name}'. Check command and configuration."
 
-    # Get the server and list its tools
     server = manager.get_server(name)
     if not server:
         return f"Error: Server '{name}' started but not accessible."
@@ -79,7 +75,11 @@ async def _connect_async(name: str) -> str:
     if not tools:
         return f"Connected to {name}, but no tools discovered."
 
-    # Format tool list
+    return _format_connection_result(name, tools)
+
+
+def _format_connection_result(name: str, tools: list[dict]) -> str:
+    """Format the connection result as markdown."""
     lines = [
         f"## Connected to {name}",
         "",
@@ -92,46 +92,17 @@ async def _connect_async(name: str) -> str:
         desc = tool.get("description", "No description")[:60]
         lines.append(f"- `{tool_name}`: {desc}")
 
-    lines.append("")
-    lines.append("Call these tools via registry-execute:")
-    lines.append(f'  `registry-execute(name="{name}.<tool>", params=\'{{...}}\')`')
+    lines.extend([
+        "",
+        "Call these tools via registry-execute:",
+        f'  `registry-execute(name="{name}.<tool>", params=\'{{...}}\')`',
+    ])
 
     return "\n".join(lines)
 
 
-def _run_in_thread(coro):
-    """Run async coroutine in a separate thread with its own event loop."""
-    import threading
-
-    result = [None]
-    error = [None]
-
-    def _execute_in_loop():
-        try:
-            # Create a completely fresh event loop in this thread
-            new_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(new_loop)
-            try:
-                result[0] = new_loop.run_until_complete(coro)
-            finally:
-                new_loop.close()
-        except Exception as e:
-            error[0] = e
-
-    thread = threading.Thread(target=_execute_in_loop)
-    thread.start()
-    thread.join(timeout=120)
-
-    if thread.is_alive():
-        return "Error: Connection timed out"
-    if error[0]:
-        raise error[0]
-    return result[0]
-
-
 def connect(name: str) -> str:
-    """
-    Connect to an external MCP server and discover its tools.
+    """Connect to an external MCP server and discover its tools.
 
     Args:
         name: Name of the server to connect to
@@ -140,6 +111,8 @@ def connect(name: str) -> str:
         List of available tools from the server.
     """
     try:
-        return _run_in_thread(_connect_async(name))
+        return run_async_in_thread(_connect_async(name))
+    except TimeoutError:
+        return "Error: Connection timed out"
     except Exception as e:
         return f"Error connecting to {name}: {e}"
